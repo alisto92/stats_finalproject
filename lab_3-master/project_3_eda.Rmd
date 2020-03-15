@@ -2,7 +2,8 @@
 title: "Project 3"
 author: "Alissa Stover"
 date: "3/14/2020"
-output: html_document
+output: github_document
+
 ---
 
 ```{r setup, include=FALSE}
@@ -81,6 +82,12 @@ We can see from the following that we don't have any missing data, which is good
 ```{r}
 pct_miss <- data %>% map(~ mean(is.na(.)))
 pct_miss
+```
+
+Save our clean dataset
+
+```{r}
+save(data2, file = "data_clean.rda")
 ```
 
 ## Identifying Key Variables 

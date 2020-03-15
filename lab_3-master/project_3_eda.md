@@ -304,6 +304,12 @@ pct_miss
     ## $pctymle
     ## [1] 0
 
+Save our clean dataset
+
+``` r
+save(data2, file = "data_clean.rda")
+```
+
 ## Identifying Key Variables
 
 To start prioritizing variables, here we group them into categories.
