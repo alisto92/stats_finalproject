@@ -30,18 +30,17 @@ head(data)
 ```
 
     ## # A tibble: 6 x 25
-    ##   county  year crmrte prbarr prbconv prbpris avgsen   polpc density taxpc
-    ##    <dbl> <dbl>  <dbl>  <dbl>   <dbl>   <dbl>  <dbl>   <dbl>   <dbl> <dbl>
-    ## 1      1    87 0.0356  0.298  0.528    0.436   6.71 1.83e-3   2.42   31.0
-    ## 2      3    87 0.0153  0.132  1.48     0.450   6.35 7.46e-4   1.05   26.9
-    ## 3      5    87 0.0130  0.444  0.268    0.600   6.76 1.23e-3   0.413  34.8
-    ## 4      7    87 0.0268  0.365  0.525    0.435   7.14 1.53e-3   0.492  42.9
-    ## 5      9    87 0.0106  0.518  0.477    0.443   8.22 8.60e-4   0.547  28.1
-    ## 6     11    87 0.0146  0.525  0.0684   0.5    13    2.88e-3   0.611  35.2
-    ## # … with 15 more variables: west <dbl>, central <dbl>, urban <dbl>,
-    ## #   pctmin80 <dbl>, wcon <dbl>, wtuc <dbl>, wtrd <dbl>, wfir <dbl>,
-    ## #   wser <dbl>, wmfg <dbl>, wfed <dbl>, wsta <dbl>, wloc <dbl>, mix <dbl>,
-    ## #   pctymle <dbl>
+    ##   county  year crmrte prbarr prbconv prbpris avgsen   polpc density taxpc  west
+    ##    <dbl> <dbl>  <dbl>  <dbl>   <dbl>   <dbl>  <dbl>   <dbl>   <dbl> <dbl> <dbl>
+    ## 1      1    87 0.0356  0.298  0.528    0.436   6.71 1.83e-3   2.42   31.0     0
+    ## 2      3    87 0.0153  0.132  1.48     0.450   6.35 7.46e-4   1.05   26.9     0
+    ## 3      5    87 0.0130  0.444  0.268    0.600   6.76 1.23e-3   0.413  34.8     1
+    ## 4      7    87 0.0268  0.365  0.525    0.435   7.14 1.53e-3   0.492  42.9     0
+    ## 5      9    87 0.0106  0.518  0.477    0.443   8.22 8.60e-4   0.547  28.1     1
+    ## 6     11    87 0.0146  0.525  0.0684   0.5    13    2.88e-3   0.611  35.2     1
+    ## # … with 14 more variables: central <dbl>, urban <dbl>, pctmin80 <dbl>,
+    ## #   wcon <dbl>, wtuc <dbl>, wtrd <dbl>, wfir <dbl>, wser <dbl>, wmfg <dbl>,
+    ## #   wfed <dbl>, wsta <dbl>, wloc <dbl>, mix <dbl>, pctymle <dbl>
 
 ``` r
 dim(data)
@@ -128,20 +127,18 @@ table(data$county, useNA = "always")
 ```
 
     ## 
-    ##    1    3    5    7    9   11   13   15   17   19   21   23   25   27   33 
-    ##    1    1    1    1    1    1    1    1    1    1    1    1    1    1    1 
-    ##   35   37   39   41   45   47   49   51   53   55   57   59   61   63   65 
-    ##    1    1    1    1    1    1    1    1    1    1    1    1    1    1    1 
-    ##   67   69   71   77   79   81   83   85   87   89   91   93   97   99  101 
-    ##    1    1    1    1    1    1    1    1    1    1    1    1    1    1    1 
-    ##  105  107  109  111  113  115  117  119  123  125  127  129  131  133  135 
-    ##    1    1    1    1    1    1    1    1    1    1    1    1    1    1    1 
-    ##  137  139  141  143  145  147  149  151  153  155  157  159  161  163  165 
-    ##    1    1    1    1    1    1    1    1    1    1    1    1    1    1    1 
-    ##  167  169  171  173  175  179  181  183  185  187  189  191  193  195  197 
-    ##    1    1    1    1    1    1    1    1    1    1    1    1    2    1    1 
-    ## <NA> 
-    ##    0
+    ##    1    3    5    7    9   11   13   15   17   19   21   23   25   27   33   35 
+    ##    1    1    1    1    1    1    1    1    1    1    1    1    1    1    1    1 
+    ##   37   39   41   45   47   49   51   53   55   57   59   61   63   65   67   69 
+    ##    1    1    1    1    1    1    1    1    1    1    1    1    1    1    1    1 
+    ##   71   77   79   81   83   85   87   89   91   93   97   99  101  105  107  109 
+    ##    1    1    1    1    1    1    1    1    1    1    1    1    1    1    1    1 
+    ##  111  113  115  117  119  123  125  127  129  131  133  135  137  139  141  143 
+    ##    1    1    1    1    1    1    1    1    1    1    1    1    1    1    1    1 
+    ##  145  147  149  151  153  155  157  159  161  163  165  167  169  171  173  175 
+    ##    1    1    1    1    1    1    1    1    1    1    1    1    1    1    1    1 
+    ##  179  181  183  185  187  189  191  193  195  197 <NA> 
+    ##    1    1    1    1    1    1    1    2    1    1    0
 
 Having 2 observations for county \#193 is surprising. We can see that
 these rows appear to be exact duplicates.
@@ -151,14 +148,13 @@ data %>% filter(county == 193)
 ```
 
     ## # A tibble: 2 x 25
-    ##   county  year crmrte prbarr prbconv prbpris avgsen   polpc density taxpc
-    ##    <dbl> <dbl>  <dbl>  <dbl>   <dbl>   <dbl>  <dbl>   <dbl>   <dbl> <dbl>
-    ## 1    193    87 0.0235  0.266   0.589   0.423   5.86 0.00118   0.814  28.5
-    ## 2    193    87 0.0235  0.266   0.589   0.423   5.86 0.00118   0.814  28.5
-    ## # … with 15 more variables: west <dbl>, central <dbl>, urban <dbl>,
-    ## #   pctmin80 <dbl>, wcon <dbl>, wtuc <dbl>, wtrd <dbl>, wfir <dbl>,
-    ## #   wser <dbl>, wmfg <dbl>, wfed <dbl>, wsta <dbl>, wloc <dbl>, mix <dbl>,
-    ## #   pctymle <dbl>
+    ##   county  year crmrte prbarr prbconv prbpris avgsen   polpc density taxpc  west
+    ##    <dbl> <dbl>  <dbl>  <dbl>   <dbl>   <dbl>  <dbl>   <dbl>   <dbl> <dbl> <dbl>
+    ## 1    193    87 0.0235  0.266   0.589   0.423   5.86 0.00118   0.814  28.5     1
+    ## 2    193    87 0.0235  0.266   0.589   0.423   5.86 0.00118   0.814  28.5     1
+    ## # … with 14 more variables: central <dbl>, urban <dbl>, pctmin80 <dbl>,
+    ## #   wcon <dbl>, wtuc <dbl>, wtrd <dbl>, wfir <dbl>, wser <dbl>, wmfg <dbl>,
+    ## #   wfed <dbl>, wsta <dbl>, wloc <dbl>, mix <dbl>, pctymle <dbl>
 
 We can see that `year` appears to be constant (which is expected). We
 also don’t have any missing values for this column. We can drop this
@@ -318,42 +314,59 @@ The following variables appear to be related to our target (crime). The
 first (`crmte`) seems to be the most closely related and will likely be
 the target variable in our model.
 
-1)  `crmrte`: crimes committed per person
-2)  `prbarr`: ‘probability’ of arrest
-3)  `prbconv`: ‘probability’ of conviction
-4)  `prbpris`: ‘probability’ of prison sentence
+### Dependent
+
+  - `crmrte`: crimes committed per person
+
+### Criminal Justice System
+
+  - `prbarr`: ‘probability’ of arrest
+  - `prbconv`: ‘probability’ of conviction
+  - `prbpris`: ‘probability’ of prison sentence
+  - `avgsen`: avg. sentence, days
+
+## Law Enforcement
+
+  - `polpc`: police per capita
+
+### Crime Severity
 
 These variables are crime related, but would likely not be used as our
 target variable. The first (`mix`) is not something we could directly
 control via policy; the other 2 could provide actionable information.
 
-5)  `mix`: offense mix: face-to-face/other
-6)  `avgsen`: avg. sentence, days
-7)  `polpc`: police per capita
+As a covariate: - `mix`: offense mix: face-to-face/other
 
-Since we are aiming to produce policy recommendations, the following
-variables may be helpful in our analysis but are not necessarily
-actionable. They describe county characteristics.
-
-8)  `county`: county identifier
-9)  `density`: people per sq. mile
-10) `west`: =1 if in western N.C.
-11) `central`: =1 if in central N.C.
-12) `urban`: =1 if in SMSA
-13) `pctmin80`: perc. minority, 1980
-14) `pctymle`: percent young male
+### Economic Policy
 
 The rest of the variables do describe things we could affect with
 policy. They all speak to wages for different sectors, except for
 `taxpc`.
 
-15) `taxpc`: tax revenue per capita
-16) `wcon`: weekly wage, construction
-17) `wtuc`: wkly wge, trns, util, commun
-18) `wtrd`: wkly wge, whlesle, retail trade
-19) `wfir`: wkly wge, fin, ins, real est
-20) `wser`: wkly wge, service industry
-21) `wmfg`: wkly wge, manufacturing
-22) `wfed`: wkly wge, fed employees
-23) `wsta`: wkly wge, state employees
-24) `wloc`: wkly wge, local gov emps
+  - `taxpc`: tax revenue per capita
+  - `wcon`: weekly wage, construction
+  - `wtuc`: wkly wge, trns, util, commun
+  - `wtrd`: wkly wge, whlesle, retail trade
+  - `wfir`: wkly wge, fin, ins, real est
+  - `wser`: wkly wge, service industry
+  - `wmfg`: wkly wge, manufacturing
+  - `wfed`: wkly wge, fed employees
+  - `wsta`: wkly wge, state employees
+  - `wloc`: wkly wge, local gov emps
+
+### Demographics
+
+Since we are aiming to produce policy recommendations, the following
+variables may be helpful in our analysis but are not necessarily
+actionable. They describe county characteristics.
+
+  - `density`: people per sq. mile
+  - `pctmin80`: perc. minority, 1980
+  - `pctymle`: percent young male
+
+### Geographics
+
+  - `county`: county identifier
+  - `west`: =1 if in western N.C.
+  - `central`: =1 if in central N.C.
+  - `urban`: =1 if in SMSA
