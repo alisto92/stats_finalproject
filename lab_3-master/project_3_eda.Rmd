@@ -96,38 +96,59 @@ To start prioritizing variables, here we group them into categories.
 
 The following variables appear to be related to our target (crime). The first (`crmte`) seems to be the most closely related and will likely be the target variable in our model. 
 
-1) `crmrte`: crimes committed per person
-2) `prbarr`: 'probability' of arrest
-3) `prbconv`: 'probability' of conviction
-4) `prbpris`: 'probability' of prison sentence
+### Dependent 
+
+- `crmrte`: crimes committed per person
+
+### Criminal Justice System
+
+- `prbarr`: 'probability' of arrest
+- `prbconv`: 'probability' of conviction
+- `prbpris`: 'probability' of prison sentence
+- `avgsen`:	avg. sentence, days
+
+## Law Enforcement
+
+- `polpc`:	police per capita
+
+### Crime Severity 
 
 These variables are crime related, but would likely not be used as our target variable. The first (`mix`) is not something we could directly control via policy; the other 2 could provide actionable information. 
 
-5) `mix`:	offense mix: face-to-face/other
-6) `avgsen`:	avg. sentence, days
-7) `polpc`:	police per capita
+As a covariate:
+- `mix`:	offense mix: face-to-face/other
 
-Since we are aiming to produce policy recommendations, the following variables may be helpful in our analysis but are not necessarily actionable. They describe county characteristics.
-
-8) `county`:	county identifier
-9) `density`:	people per sq. mile
-10) `west`:	=1 if in western N.C.
-11) `central`:	=1 if in central N.C.
-12) `urban`:	=1 if in SMSA
-13) `pctmin80`:	perc. minority, 1980
-14) `pctymle`:	percent young male
+### Economic Policy
 
 The rest of the variables do describe things we could affect with policy. They all speak to wages for different sectors, except for `taxpc`.
 
-15) `taxpc`:	tax revenue per capita
-16) `wcon`:	weekly wage, construction
-17) `wtuc`:	wkly wge, trns, util, commun
-18) `wtrd`:	wkly wge, whlesle, retail trade
-19) `wfir`:	wkly wge, fin, ins, real est
-20) `wser`:	wkly wge, service industry
-21) `wmfg`:	wkly wge, manufacturing
-22) `wfed`:	wkly wge, fed employees
-23) `wsta`:	wkly wge, state employees
-24) `wloc`:	wkly wge, local gov emps
+- `taxpc`:	tax revenue per capita
+- `wcon`:	weekly wage, construction
+- `wtuc`:	wkly wge, trns, util, commun
+- `wtrd`:	wkly wge, whlesle, retail trade
+- `wfir`:	wkly wge, fin, ins, real est
+- `wser`:	wkly wge, service industry
+- `wmfg`:	wkly wge, manufacturing
+- `wfed`:	wkly wge, fed employees
+- `wsta`:	wkly wge, state employees
+- `wloc`:	wkly wge, local gov emps
+
+### Demographics 
+
+Since we are aiming to produce policy recommendations, the following variables may be helpful in our analysis but are not necessarily actionable. They describe county characteristics.
+
+- `density`:	people per sq. mile
+- `pctmin80`:	perc. minority, 1980
+- `pctymle`:	percent young male
+
+### Geographics
+
+- `county`:	county identifier
+- `west`:	=1 if in western N.C.
+- `central`:	=1 if in central N.C.
+- `urban`:	=1 if in SMSA
+
+
+
 
 

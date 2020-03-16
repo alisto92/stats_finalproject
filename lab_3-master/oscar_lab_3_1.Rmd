@@ -1,0 +1,205 @@
+---
+title: "lab_3_1"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse) # for data import, manipulation, viz
+load("~/Documents/GitHub/Berkeley_DS/w203_stats/w203_project3/lab_3-master/data_clean.rda")
+filter <- dplyr::filter
+
+crime_df = data2
+```
+
+```{r}
+summary(crime_df)
+```
+
+## Explore variables
+
+### Crime Rate
+
+```{r}
+summary(crime_df %>% select(crmrte))
+````
+
+
+```{r}
+ggplot(crime_df, aes(x=crmrte)) +
+  geom_histogram(bins = 20)
+```
+
+This variable follows a quasi-normal distribution with a slight skew to the left.
+
+```{r}
+qqnorm(crime_df$crmrte)
+```
+
+The Q-Q plot shows that the `crmrte` variable approaches a normal distribution.
+
+### Probability of Arrest
+
+```{r}
+prbarr_df = crime_df %>% select(prbarr)
+summary(prbarr_df)
+```
+
+```{r}
+paste("Number of Observations:", dim(prbarr_df)[1])
+```
+
+Dropped one value with greater than 1 probability of arrest
+
+```{r}
+ggplot(prbarr_df, aes(x = prbarr)) +
+  geom_histogram(bins = 30)
+```
+
+```{r}
+qqnorm(prbarr_df$prbarr)
+```
+
+The probability of arrest's ditribution also approximates a normal distribution but to a lesser degree than crime rate.
+
+### probability of conviction
+
+```{r}
+prbconv_df = crime_df %>% select(prbconv)
+print(paste("Number of Observations:", dim(prbconv_df)[1]))
+print("Summary Statistics of Probability of Conviction")
+summary(prbconv_df)
+```
+
+```{r}
+ggplot(prbconv_df, aes(x = prbconv)) +
+  geom_histogram()
+```
+
+```{r}
+qqnorm(prbconv_df$prbconv)
+```
+
+The probability of conversion seem to follow a normal distribution quite closely.
+
+### Probability of Prison Sentence
+
+```{r}
+prbpris_df = crime_df %>% select(prbpris)
+print(paste("Number of Observations:", dim(prbpris_df)[1]))
+print("Summary Statistics of Prision Sentence")
+summary(prbpris_df$prbpris)
+```
+
+```{r}
+ggplot(prbpris_df, aes(x = prbpris)) +
+  geom_histogram()
+```
+
+```{r}
+qqnorm(prbpris_df$prbpris)
+```
+
+### Correlation Matrix
+
+Correlation matrix for potential objective variable.
+
+```{r}
+target_df = crime_df %>% select(crmrte, prbarr, prbconv, prbpris)
+cor(target_df)
+```
+
+crmrte: Medium negative correlation with `prbarr` and `prbconv`. Low positive correlation with `prbpris`
+prbarr: Low correlation with `prbconv` and `prbpris`.
+prbconv: Low correlation with `prbpris`.
+prbpris: Low correlation with all.
+
+**Single Variable Conclusion:** `crmrte` and `prbpris` have the most normal distribution of the four variables. Note that those variable are not correlated with each other.
+
+## Independent Variable analysis
+
+### Average Sentence (days)
+
+```{r}
+avgsen_df = crime_df %>% select(avgsen) 
+print(paste("Number of Observations:", dim(avgsen_df)[1]))
+summary(avgsen_df)
+```
+
+```{r}
+ggplot(avgsen_df, aes(x = avgsen)) +
+  geom_histogram()
+```
+
+
+
+```{r}
+qqnorm(avgsen_df$avgsen)
+```
+
+Fairly normally distributed.
+
+### Police per Capita
+
+```{r}
+polpc_df = crime_df %>% select(polpc)
+print(paste("Number of Observations:", dim(polpc_df)[1]))
+print("Summary Statistics of Police per Capita")
+summary(polpc_df$polpc)
+```
+
+```{r}
+ggplot(polpc_df, aes(x = polpc)) +
+  geom_histogram()
+```
+
+Not normal but with skew to the left.
+
+```{r}
+polpc_df = polpc_df %>% mutate(polpc_ln = log(polpc)) %>% select(polpc, polpc_ln) 
+
+ggplot(polpc_df, aes(x = polpc_ln)) +
+  geom_histogram()
+```
+
+Log transforming `polpc` makes the data more normally distributed.
+
+```{r}
+qqnorm(polpc_df$polpc_ln)
+```
+
+Fairly normal.
+
+### Correlation
+
+```{r}
+cor(avgsen_df$avgsen, polpc_df$polpc_ln)
+```
+
+Medium positive correlation.
+
+## Test Bivariate Relationshiop
+
+```{r}
+plot(x = crime_df$crmrte, y = crime_df$avgsen, main = "Scatterplot of Crime Rate vs Average Sentence")
+```
+```{r}
+polpc_md = lm(crime_df$crmrte ~ log(crime_df$polpc))
+polpc_md$coefficients
+```
+
+
+```{r}
+ggplot(crime_df, aes(x=crmrte, y=log(polpc + 1))) + 
+  geom_point()+
+  geom_smooth(method=lm, se=FALSE)
+```
+
+```{r}
+cor(crime_df$polpc, crime_df$prbarr)
+```
+
+```{r}
+ggplot(crime_df, aes(x=prbarr, y=polpc)) + 
+  geom_point() +
+  geom_smooth(method=lm, se=FALSE)
+```
