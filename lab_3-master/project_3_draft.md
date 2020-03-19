@@ -151,6 +151,8 @@ assess the overall appropriateness of the data.
 
 ``` r
 library(tidyverse) # for data import, manipulation, viz
+library(corrplot) # for correlation matix
+library(stargazer) # visualize model fit
 ```
 
 #### Import Data
@@ -769,6 +771,450 @@ ggplot(data_geo_long, aes(value)) +
   - `west`: =1 if in western N.C.
   - `central`: =1 if in central N.C.
   - `urban`: =1 if in SMSA
+
+### Relationships between Variables
+
+One would expect variables within each of the above groups to be
+correlated to each other.
+
+``` r
+data_corr <- data2 %>% select(-county) 
+
+matrix_corr <- round(cor(data_corr), 1)
+```
+
+``` r
+corrplot(matrix_corr, type = "lower", method = "ellipse", order = "alphabet")
+```
+
+![](project_3_draft_files/figure-gfm/unnamed-chunk-34-1.png)<!-- -->
+
+## Results
+
+  - Discuss transformations
+  - Discuss
+results
+
+### Priscilla
+
+``` r
+av_wage <- log(rowMeans(data2[c('wcon', 'wtuc', 'wtrd', 'wfir', 'wser', 'wmfg', 'wfed', 'wsta', 'wloc')]))
+
+m1 <- lm(log(crmrte) ~ prbarr, data = data2) #only probs arrest, 
+#here there are obvious ommited vars, as the presence of police 
+m2 <- lm(log(crmrte) ~ prbarr + prbpris + log(avgsen), data = data2) #adding other law enforcement vars
+m3 <- lm(log(crmrte) ~ prbarr + prbpris + log(avgsen) + log(polpc) + mix, data = data2) #also controlling for # of police p/c and offence mix
+m4 <- lm(log(crmrte) ~  prbarr + prbpris + log(avgsen) + log(polpc) + mix + log(density) + 
+           pctymle + pctmin80, data = data2) #adding demographic vars
+m5 <- lm(log(crmrte) ~  prbarr + prbpris + log(avgsen) + log(polpc) + mix + log(density) + 
+           pctymle + pctmin80 + west + central + urban, data = data2) # adding geographic data
+m6 <- lm(log(crmrte) ~  prbarr + prbpris + log(avgsen) + log(polpc) + mix + log(density) + 
+           pctymle + pctmin80 + west + central + urban + av_wage + log(taxpc), data = data2) # adding economic data
+#m4 <- glm(fast ~ hp + drat + am, family=binomial(link="logit"), data=mydata) stargazer(m1, m2, m3, m4, type="text",
+                                                                                       #dep.var.labels=c("Miles/(US) gallon","Fast car (=1)"), covariate.labels=c("Gross horsepower","Rear axle ratio","Four foward gears",
+stargazer(m1, m2, m3, m4, m5, m6, type="text",
+          dep.var.labels=c("ln(Crimes committed per person)"), covariate.labels=c("'Probability' of arrest", "'Probability' of prison sentence",   "ln(Avg. sentence, days)", "ln(Police per capita)",  "Offense mix: face-to-face/other",   "ln(People per sq. mile)",  "Percent young male", "Perc. minority, 1980", "=1 if in western N.C.", "=1 if in central N.C.",  "=1 if in SMSA", "ln(Average sector wkly wage)", "ln(Tax revenue per capita)"), out="models.txt")
+```
+
+    ## 
+    ## ===========================================================================================================================================================================
+    ##                                                                                             Dependent variable:                                                            
+    ##                                  ------------------------------------------------------------------------------------------------------------------------------------------
+    ##                                                                                       ln(Crimes committed per person)                                                      
+    ##                                           (1)                    (2)                   (3)                    (4)                     (5)                     (6)          
+    ## ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    ## 'Probability' of arrest                -1.884***              -1.930***             -2.389***              -1.840***               -1.636***               -1.678***       
+    ##                                         (0.374)                (0.380)               (0.383)                (0.305)                 (0.310)                 (0.317)        
+    ##                                                                                                                                                                            
+    ## 'Probability' of prison sentence                                0.368                 0.171                 -1.225**                -0.942*                -1.006**        
+    ##                                                                (0.649)               (0.586)                (0.492)                 (0.497)                 (0.501)        
+    ##                                                                                                                                                                            
+    ## ln(Avg. sentence, days)                                         0.162                 -0.131                -0.261*                -0.294**                -0.311**        
+    ##                                                                (0.188)               (0.187)                (0.144)                 (0.145)                 (0.147)        
+    ##                                                                                                                                                                            
+    ## ln(Police per capita)                                                                0.640***               0.667***               0.601***                0.665***        
+    ##                                                                                      (0.138)                (0.107)                 (0.111)                 (0.131)        
+    ##                                                                                                                                                                            
+    ## Offense mix: face-to-face/other                                                       0.620                 1.455***                1.171**                  0.921         
+    ##                                                                                      (0.643)                (0.532)                 (0.534)                 (0.571)        
+    ##                                                                                                                                                                            
+    ## ln(People per sq. mile)                                                                                     0.204***               0.162***                0.177***        
+    ##                                                                                                             (0.033)                 (0.037)                 (0.039)        
+    ##                                                                                                                                                                            
+    ## Percent young male                                                                                           1.855                   1.851                   1.470         
+    ##                                                                                                             (1.575)                 (1.569)                 (1.663)        
+    ##                                                                                                                                                                            
+    ## Perc. minority, 1980                                                                                        0.011***                0.006*                  0.007**        
+    ##                                                                                                             (0.002)                 (0.003)                 (0.003)        
+    ##                                                                                                                                                                            
+    ## =1 if in western N.C.                                                                                                               -0.238*                 -0.187         
+    ##                                                                                                                                     (0.135)                 (0.149)        
+    ##                                                                                                                                                                            
+    ## =1 if in central N.C.                                                                                                               -0.078                  -0.023         
+    ##                                                                                                                                     (0.091)                 (0.105)        
+    ##                                                                                                                                                                            
+    ## =1 if in SMSA                                                                                                                       0.303**                 0.346**        
+    ##                                                                                                                                     (0.145)                 (0.156)        
+    ##                                                                                                                                                                            
+    ## ln(Average sector wkly wage)                                                                                                                                -0.594         
+    ##                                                                                                                                                             (0.470)        
+    ##                                                                                                                                                                            
+    ## ln(Tax revenue per capita)                                                                                                                                   0.001         
+    ##                                                                                                                                                             (0.169)        
+    ##                                                                                                                                                                            
+    ## Constant                               -2.985***              -3.484***               1.443                  1.798*                  1.483                   5.393         
+    ##                                         (0.122)                (0.526)               (1.188)                (0.944)                 (0.984)                 (3.347)        
+    ##                                                                                                                                                                            
+    ## ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    ## Observations                               90                    90                     90                     90                     90                      90           
+    ## R2                                       0.224                  0.232                 0.395                  0.665                   0.690                   0.697         
+    ## Adjusted R2                              0.215                  0.205                 0.359                  0.631                   0.647                   0.645         
+    ## Residual Std. Error                 0.486 (df = 88)        0.489 (df = 86)       0.439 (df = 84)        0.333 (df = 81)         0.326 (df = 78)         0.327 (df = 76)    
+    ## F Statistic                      25.330*** (df = 1; 88) 8.659*** (df = 3; 86) 10.970*** (df = 5; 84) 20.056*** (df = 8; 81) 15.819*** (df = 11; 78) 13.442*** (df = 13; 76)
+    ## ===========================================================================================================================================================================
+    ## Note:                                                                                                                                           *p<0.1; **p<0.05; ***p<0.01
+
+### Alissa
+
+DV: `crmrte`
+
+IV: crime policy –\> “prbarr”, “prbconv”, “avgsen” \* Picked lower wages
+(based on boxplots)\* – would be more likely to affect w/ min wage
+policy econ policy –\> “wser”, “wtrd” covariates – “mix” “density” –
+more crime if more people `pctymle` – riskier pop pctmin80 – minority
+status
+
+``` r
+m1 <- lm(crmrte ~ prbarr , data = data2)
+summary(m1)
+```
+
+    ## 
+    ## Call:
+    ## lm(formula = crmrte ~ prbarr, data = data2)
+    ## 
+    ## Residuals:
+    ##       Min        1Q    Median        3Q       Max 
+    ## -0.028061 -0.010754 -0.003169  0.006823  0.057531 
+    ## 
+    ## Coefficients:
+    ##              Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept)  0.049520   0.004372  11.328  < 2e-16 ***
+    ## prbarr      -0.054228   0.013433  -4.037 0.000115 ***
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Residual standard error: 0.01745 on 88 degrees of freedom
+    ## Multiple R-squared:  0.1562, Adjusted R-squared:  0.1467 
+    ## F-statistic:  16.3 on 1 and 88 DF,  p-value: 0.0001153
+
+``` r
+m2 <- lm(crmrte ~ prbarr + prbconv, data = data2)
+summary(m2)
+```
+
+    ## 
+    ## Call:
+    ## lm(formula = crmrte ~ prbarr + prbconv, data = data2)
+    ## 
+    ## Residuals:
+    ##       Min        1Q    Median        3Q       Max 
+    ## -0.033134 -0.010811 -0.003115  0.006445  0.052641 
+    ## 
+    ## Coefficients:
+    ##              Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept)  0.062468   0.004828  12.938  < 2e-16 ***
+    ## prbarr      -0.057361   0.012118  -4.733 8.49e-06 ***
+    ## prbconv     -0.021825   0.004710  -4.633 1.25e-05 ***
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Residual standard error: 0.01571 on 87 degrees of freedom
+    ## Multiple R-squared:  0.3232, Adjusted R-squared:  0.3077 
+    ## F-statistic: 20.78 on 2 and 87 DF,  p-value: 4.204e-08
+
+``` r
+m3 <- lm(crmrte ~ prbarr + prbconv + log(polpc), data = data2)
+summary(m3)
+```
+
+    ## 
+    ## Call:
+    ## lm(formula = crmrte ~ prbarr + prbconv + log(polpc), data = data2)
+    ## 
+    ## Residuals:
+    ##       Min        1Q    Median        3Q       Max 
+    ## -0.034048 -0.007456 -0.000490  0.007242  0.041542 
+    ## 
+    ## Coefficients:
+    ##              Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept)  0.229719   0.024812   9.258 1.46e-14 ***
+    ## prbarr      -0.072196   0.010054  -7.181 2.32e-10 ***
+    ## prbconv     -0.021945   0.003815  -5.752 1.32e-07 ***
+    ## log(polpc)   0.025208   0.003693   6.826 1.17e-09 ***
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Residual standard error: 0.01273 on 86 degrees of freedom
+    ## Multiple R-squared:  0.5611, Adjusted R-squared:  0.5458 
+    ## F-statistic: 36.64 on 3 and 86 DF,  p-value: 2.367e-15
+
+``` r
+m4 <- lm(crmrte ~ prbarr + prbconv + log(polpc) + wser, data = data2)
+summary(m4)
+```
+
+    ## 
+    ## Call:
+    ## lm(formula = crmrte ~ prbarr + prbconv + log(polpc) + wser, data = data2)
+    ## 
+    ## Residuals:
+    ##       Min        1Q    Median        3Q       Max 
+    ## -0.034509 -0.007064 -0.000699  0.007207  0.040724 
+    ## 
+    ## Coefficients:
+    ##               Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept)  2.276e-01  2.487e-02   9.152 2.66e-14 ***
+    ## prbarr      -7.086e-02  1.012e-02  -7.002 5.51e-10 ***
+    ## prbconv     -2.404e-02  4.278e-03  -5.619 2.38e-07 ***
+    ## log(polpc)   2.510e-02  3.691e-03   6.800 1.37e-09 ***
+    ## wser         7.937e-06  7.361e-06   1.078    0.284    
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Residual standard error: 0.01272 on 85 degrees of freedom
+    ## Multiple R-squared:  0.567,  Adjusted R-squared:  0.5466 
+    ## F-statistic: 27.83 on 4 and 85 DF,  p-value: 8.926e-15
+
+``` r
+m5 <- lm(crmrte ~ prbarr + prbconv + log(polpc) + wser + wtrd, data = data2)
+summary(m5)
+```
+
+    ## 
+    ## Call:
+    ## lm(formula = crmrte ~ prbarr + prbconv + log(polpc) + wser + 
+    ##     wtrd, data = data2)
+    ## 
+    ## Residuals:
+    ##       Min        1Q    Median        3Q       Max 
+    ## -0.025784 -0.008430 -0.000751  0.008064  0.034591 
+    ## 
+    ## Coefficients:
+    ##               Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept)  1.794e-01  2.734e-02   6.560 4.16e-09 ***
+    ## prbarr      -6.583e-02  9.650e-03  -6.822 1.29e-09 ***
+    ## prbconv     -2.205e-02  4.073e-03  -5.414 5.75e-07 ***
+    ## log(polpc)   2.237e-02  3.568e-03   6.270 1.49e-08 ***
+    ## wser         7.267e-06  6.940e-06   1.047 0.298043    
+    ## wtrd         1.337e-04  3.908e-05   3.422 0.000961 ***
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Residual standard error: 0.01198 on 84 degrees of freedom
+    ## Multiple R-squared:   0.62,  Adjusted R-squared:  0.5974 
+    ## F-statistic: 27.41 on 5 and 84 DF,  p-value: 2.399e-16
+
+``` r
+m6 <- lm(crmrte ~ prbarr + prbconv + log(polpc) + wser + wtrd + mix, data = data2)
+summary(m6)
+```
+
+    ## 
+    ## Call:
+    ## lm(formula = crmrte ~ prbarr + prbconv + log(polpc) + wser + 
+    ##     wtrd + mix, data = data2)
+    ## 
+    ## Residuals:
+    ##       Min        1Q    Median        3Q       Max 
+    ## -0.026735 -0.008904 -0.000631  0.007857  0.034482 
+    ## 
+    ## Coefficients:
+    ##               Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept)  1.807e-01  2.755e-02   6.559 4.35e-09 ***
+    ## prbarr      -6.342e-02  1.057e-02  -6.000 4.97e-08 ***
+    ## prbconv     -2.279e-02  4.287e-03  -5.315 8.81e-07 ***
+    ## log(polpc)   2.232e-02  3.584e-03   6.228 1.86e-08 ***
+    ## wser         7.328e-06  6.969e-06   1.052  0.29605    
+    ## wtrd         1.307e-04  3.961e-05   3.298  0.00143 ** 
+    ## mix         -1.041e-02  1.821e-02  -0.572  0.56917    
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Residual standard error: 0.01203 on 83 degrees of freedom
+    ## Multiple R-squared:  0.6215, Adjusted R-squared:  0.5941 
+    ## F-statistic: 22.71 on 6 and 83 DF,  p-value: 1.138e-15
+
+``` r
+m7 <- lm(crmrte ~ prbarr + prbconv + log(polpc) + wser + wtrd + mix + density, data = data2)
+summary(m7)
+```
+
+    ## 
+    ## Call:
+    ## lm(formula = crmrte ~ prbarr + prbconv + log(polpc) + wser + 
+    ##     wtrd + mix + density, data = data2)
+    ## 
+    ## Residuals:
+    ##       Min        1Q    Median        3Q       Max 
+    ## -0.024210 -0.006598 -0.001113  0.006339  0.027179 
+    ## 
+    ## Coefficients:
+    ##               Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept)  1.479e-01  2.532e-02   5.844 9.98e-08 ***
+    ## prbarr      -4.503e-02  1.010e-02  -4.460 2.58e-05 ***
+    ## prbconv     -1.742e-02  3.955e-03  -4.404 3.18e-05 ***
+    ## log(polpc)   1.585e-02  3.442e-03   4.604 1.49e-05 ***
+    ## wser         2.694e-06  6.247e-06   0.431    0.667    
+    ## wtrd         1.733e-05  4.210e-05   0.412    0.682    
+    ## mix         -9.378e-03  1.614e-02  -0.581    0.563    
+    ## density      5.307e-03  1.089e-03   4.872 5.31e-06 ***
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Residual standard error: 0.01066 on 82 degrees of freedom
+    ## Multiple R-squared:  0.7064, Adjusted R-squared:  0.6814 
+    ## F-statistic: 28.19 on 7 and 82 DF,  p-value: < 2.2e-16
+
+``` r
+m8 <- lm(crmrte ~ prbarr + prbconv + log(polpc) + wser + wtrd + mix + density + pctymle, data = data2)
+summary(m8)
+```
+
+    ## 
+    ## Call:
+    ## lm(formula = crmrte ~ prbarr + prbconv + log(polpc) + wser + 
+    ##     wtrd + mix + density + pctymle, data = data2)
+    ## 
+    ## Residuals:
+    ##       Min        1Q    Median        3Q       Max 
+    ## -0.023233 -0.006665 -0.001562  0.006116  0.029041 
+    ## 
+    ## Coefficients:
+    ##               Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept)  1.296e-01  2.775e-02   4.669 1.18e-05 ***
+    ## prbarr      -4.233e-02  1.016e-02  -4.166 7.69e-05 ***
+    ## prbconv     -1.621e-02  3.998e-03  -4.055 0.000114 ***
+    ## log(polpc)   1.477e-02  3.482e-03   4.242 5.84e-05 ***
+    ## wser         2.626e-06  6.194e-06   0.424 0.672703    
+    ## wtrd         3.167e-05  4.275e-05   0.741 0.460961    
+    ## mix         -6.842e-03  1.608e-02  -0.425 0.671689    
+    ## density      5.217e-03  1.082e-03   4.823 6.53e-06 ***
+    ## pctymle      8.042e-02  5.180e-02   1.552 0.124473    
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Residual standard error: 0.01057 on 81 degrees of freedom
+    ## Multiple R-squared:  0.7149, Adjusted R-squared:  0.6868 
+    ## F-statistic: 25.39 on 8 and 81 DF,  p-value: < 2.2e-16
+
+``` r
+m9 <- lm(crmrte ~ prbarr + prbconv + log(polpc) + wser + wtrd + mix + density + pctymle + pctmin80, data = data2)
+summary(m9)
+```
+
+    ## 
+    ## Call:
+    ## lm(formula = crmrte ~ prbarr + prbconv + log(polpc) + wser + 
+    ##     wtrd + mix + density + pctymle + pctmin80, data = data2)
+    ## 
+    ## Residuals:
+    ##        Min         1Q     Median         3Q        Max 
+    ## -0.0166000 -0.0061177 -0.0006004  0.0045858  0.0315167 
+    ## 
+    ## Coefficients:
+    ##               Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept)  1.465e-01  2.266e-02   6.463 7.47e-09 ***
+    ## prbarr      -4.358e-02  8.246e-03  -5.285 1.06e-06 ***
+    ## prbconv     -1.719e-02  3.247e-03  -5.293 1.03e-06 ***
+    ## log(polpc)   1.776e-02  2.862e-03   6.206 2.26e-08 ***
+    ## wser        -4.200e-06  5.132e-06  -0.818   0.4156    
+    ## wtrd         2.914e-05  3.469e-05   0.840   0.4034    
+    ## mix         -2.715e-02  1.341e-02  -2.024   0.0463 *  
+    ## density      5.155e-03  8.777e-04   5.874 9.32e-08 ***
+    ## pctymle      6.603e-02  4.209e-02   1.569   0.1206    
+    ## pctmin80     3.751e-04  5.717e-05   6.560 4.90e-09 ***
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Residual standard error: 0.008577 on 80 degrees of freedom
+    ## Multiple R-squared:  0.8146, Adjusted R-squared:  0.7938 
+    ## F-statistic: 39.07 on 9 and 80 DF,  p-value: < 2.2e-16
+
+``` r
+# model w/o 
+m10 <- lm(log(crmrte) ~ prbarr + prbconv + avgsen + wser + wtrd + mix + density + pctymle + pctmin80, data = data2)
+summary(m10)
+```
+
+    ## 
+    ## Call:
+    ## lm(formula = log(crmrte) ~ prbarr + prbconv + avgsen + wser + 
+    ##     wtrd + mix + density + pctymle + pctmin80, data = data2)
+    ## 
+    ## Residuals:
+    ##      Min       1Q   Median       3Q      Max 
+    ## -0.81645 -0.16958  0.01172  0.16892  1.02683 
+    ## 
+    ## Coefficients:
+    ##               Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept) -3.8200294  0.3248364 -11.760  < 2e-16 ***
+    ## prbarr      -1.3719781  0.2742711  -5.002 3.29e-06 ***
+    ## prbconv     -0.5787306  0.1141609  -5.069 2.52e-06 ***
+    ## avgsen       0.0111619  0.0123704   0.902   0.3696    
+    ## wser        -0.0002010  0.0001811  -1.110   0.2703    
+    ## wtrd         0.0015161  0.0011879   1.276   0.2056    
+    ## mix         -0.6537305  0.4629005  -1.412   0.1618    
+    ## density      0.1398907  0.0282134   4.958 3.91e-06 ***
+    ## pctymle      2.6023917  1.4239004   1.828   0.0713 .  
+    ## pctmin80     0.0114508  0.0019402   5.902 8.28e-08 ***
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Residual standard error: 0.2932 on 80 degrees of freedom
+    ## Multiple R-squared:  0.7434, Adjusted R-squared:  0.7145 
+    ## F-statistic: 25.75 on 9 and 80 DF,  p-value: < 2.2e-16
+
+``` r
+m1 <- lm(log(crmrte) ~ prbarr , data = data2)
+m2 <- lm(log(crmrte) ~ prbarr + prbconv, data = data2)
+m3 <- lm(log(crmrte) ~ prbarr + prbconv + avgsen, data = data2)
+m4 <- lm(log(crmrte) ~ prbarr + prbconv + avgsen + wser, data = data2)
+m5 <- lm(log(crmrte) ~ prbarr + prbconv + avgsen + wser + wtrd, data = data2)
+m6 <- lm(log(crmrte) ~ prbarr + prbconv + avgsen + wser + wtrd + mix, data = data2)
+m7 <- lm(log(crmrte) ~ prbarr + prbconv + avgsen + wser + wtrd + mix + density, data = data2)
+m8 <- lm(log(crmrte) ~ prbarr + prbconv + avgsen + wser + wtrd + mix + density + pctymle, data = data2)
+m9 <- lm(log(crmrte) ~ prbarr + prbconv + avgsen + wser + wtrd + mix + density + pctymle + pctmin80, data = data2)
+summary(m9)
+```
+
+    ## 
+    ## Call:
+    ## lm(formula = log(crmrte) ~ prbarr + prbconv + avgsen + wser + 
+    ##     wtrd + mix + density + pctymle + pctmin80, data = data2)
+    ## 
+    ## Residuals:
+    ##      Min       1Q   Median       3Q      Max 
+    ## -0.81645 -0.16958  0.01172  0.16892  1.02683 
+    ## 
+    ## Coefficients:
+    ##               Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept) -3.8200294  0.3248364 -11.760  < 2e-16 ***
+    ## prbarr      -1.3719781  0.2742711  -5.002 3.29e-06 ***
+    ## prbconv     -0.5787306  0.1141609  -5.069 2.52e-06 ***
+    ## avgsen       0.0111619  0.0123704   0.902   0.3696    
+    ## wser        -0.0002010  0.0001811  -1.110   0.2703    
+    ## wtrd         0.0015161  0.0011879   1.276   0.2056    
+    ## mix         -0.6537305  0.4629005  -1.412   0.1618    
+    ## density      0.1398907  0.0282134   4.958 3.91e-06 ***
+    ## pctymle      2.6023917  1.4239004   1.828   0.0713 .  
+    ## pctmin80     0.0114508  0.0019402   5.902 8.28e-08 ***
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Residual standard error: 0.2932 on 80 degrees of freedom
+    ## Multiple R-squared:  0.7434, Adjusted R-squared:  0.7145 
+    ## F-statistic: 25.75 on 9 and 80 DF,  p-value: < 2.2e-16
 
 You will next build a set of models to investigate your research
 question, documenting your decisions. Here are some things to keep in

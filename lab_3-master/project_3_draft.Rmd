@@ -112,6 +112,8 @@ Your introduction should present a research question and explain the concept tha
 
 ```{r, message=FALSE}
 library(tidyverse) # for data import, manipulation, viz
+library(corrplot) # for correlation matix
+library(stargazer) # visualize model fit
 ```
 
 #### Import Data
@@ -440,6 +442,103 @@ ggplot(data_geo_long, aes(value)) +
 - `urban`:	=1 if in SMSA
 
 
+### Relationships between Variables
+
+One would expect variables within each of the above groups to be correlated to each other. 
+
+```{r}
+data_corr <- data2 %>% select(-county) 
+
+matrix_corr <- round(cor(data_corr), 1)
+```
+```{r}
+corrplot(matrix_corr, type = "lower", method = "ellipse", order = "alphabet")
+```
+
+## Results
+
+- Discuss transformations
+- Discuss results
+
+### Priscilla 
+
+```{r}
+
+av_wage <- log(rowMeans(data2[c('wcon', 'wtuc', 'wtrd', 'wfir', 'wser', 'wmfg', 'wfed', 'wsta', 'wloc')]))
+
+m1 <- lm(log(crmrte) ~ prbarr, data = data2) #only probs arrest, 
+#here there are obvious ommited vars, as the presence of police 
+m2 <- lm(log(crmrte) ~ prbarr + prbpris + log(avgsen), data = data2) #adding other law enforcement vars
+m3 <- lm(log(crmrte) ~ prbarr + prbpris + log(avgsen) + log(polpc) + mix, data = data2) #also controlling for # of police p/c and offence mix
+m4 <- lm(log(crmrte) ~  prbarr + prbpris + log(avgsen) + log(polpc) + mix + log(density) + 
+           pctymle + pctmin80, data = data2) #adding demographic vars
+m5 <- lm(log(crmrte) ~  prbarr + prbpris + log(avgsen) + log(polpc) + mix + log(density) + 
+           pctymle + pctmin80 + west + central + urban, data = data2) # adding geographic data
+m6 <- lm(log(crmrte) ~  prbarr + prbpris + log(avgsen) + log(polpc) + mix + log(density) + 
+           pctymle + pctmin80 + west + central + urban + av_wage + log(taxpc), data = data2) # adding economic data
+#m4 <- glm(fast ~ hp + drat + am, family=binomial(link="logit"), data=mydata) stargazer(m1, m2, m3, m4, type="text",
+                                                                                       #dep.var.labels=c("Miles/(US) gallon","Fast car (=1)"), covariate.labels=c("Gross horsepower","Rear axle ratio","Four foward gears",
+stargazer(m1, m2, m3, m4, m5, m6, type="text",
+          dep.var.labels=c("ln(Crimes committed per person)"), covariate.labels=c("'Probability' of arrest", "'Probability' of prison sentence",   "ln(Avg. sentence, days)", "ln(Police per capita)",  "Offense mix: face-to-face/other",   "ln(People per sq. mile)",  "Percent young male", "Perc. minority, 1980", "=1 if in western N.C.", "=1 if in central N.C.",  "=1 if in SMSA", "ln(Average sector wkly wage)", "ln(Tax revenue per capita)"), out="models.txt")
+
+```
+
+### Alissa
+
+DV: `crmrte`
+
+IV: 
+crime policy --> "prbarr", "prbconv", "avgsen" 
+* Picked lower wages (based on boxplots)* -- would be more likely to affect w/ min wage policy 
+econ policy --> "wser", "wtrd" 
+covariates -- 
+"mix"
+"density" -- more crime if more people 
+`pctymle` -- riskier pop
+pctmin80 -- minority status
+
+
+```{r}
+m1 <- lm(crmrte ~ prbarr , data = data2)
+summary(m1)
+m2 <- lm(crmrte ~ prbarr + prbconv, data = data2)
+summary(m2)
+m3 <- lm(crmrte ~ prbarr + prbconv + log(polpc), data = data2)
+summary(m3)
+m4 <- lm(crmrte ~ prbarr + prbconv + log(polpc) + wser, data = data2)
+summary(m4)
+m5 <- lm(crmrte ~ prbarr + prbconv + log(polpc) + wser + wtrd, data = data2)
+summary(m5)
+m6 <- lm(crmrte ~ prbarr + prbconv + log(polpc) + wser + wtrd + mix, data = data2)
+summary(m6)
+m7 <- lm(crmrte ~ prbarr + prbconv + log(polpc) + wser + wtrd + mix + density, data = data2)
+summary(m7)
+m8 <- lm(crmrte ~ prbarr + prbconv + log(polpc) + wser + wtrd + mix + density + pctymle, data = data2)
+summary(m8)
+m9 <- lm(crmrte ~ prbarr + prbconv + log(polpc) + wser + wtrd + mix + density + pctymle + pctmin80, data = data2)
+summary(m9)
+
+# model w/o 
+m10 <- lm(log(crmrte) ~ prbarr + prbconv + avgsen + wser + wtrd + mix + density + pctymle + pctmin80, data = data2)
+summary(m10)
+
+```
+
+```{r}
+m1 <- lm(log(crmrte) ~ prbarr , data = data2)
+m2 <- lm(log(crmrte) ~ prbarr + prbconv, data = data2)
+m3 <- lm(log(crmrte) ~ prbarr + prbconv + avgsen, data = data2)
+m4 <- lm(log(crmrte) ~ prbarr + prbconv + avgsen + wser, data = data2)
+m5 <- lm(log(crmrte) ~ prbarr + prbconv + avgsen + wser + wtrd, data = data2)
+m6 <- lm(log(crmrte) ~ prbarr + prbconv + avgsen + wser + wtrd + mix, data = data2)
+m7 <- lm(log(crmrte) ~ prbarr + prbconv + avgsen + wser + wtrd + mix + density, data = data2)
+m8 <- lm(log(crmrte) ~ prbarr + prbconv + avgsen + wser + wtrd + mix + density + pctymle, data = data2)
+m9 <- lm(log(crmrte) ~ prbarr + prbconv + avgsen + wser + wtrd + mix + density + pctymle + pctmin80, data = data2)
+summary(m9)
+
+
+
+```
 
 
 
