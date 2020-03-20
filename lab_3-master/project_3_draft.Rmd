@@ -33,33 +33,66 @@ These variables describe things we could affect with economic policy. For exampl
 - `wsta`:	wkly wge, state employees
 - `wloc`:	wkly wge, local gov emps
 
+The following variable represents tax policy, but it could also reflect overall wealth in a county (holding tax rate constant, counties with more wealth will have more tax revenue and vice versa). 
+
+- `taxpc`:	tax revenue per capita 
+
 ### Criminal Justice Policy
 
 These variables describe things we could affect with policy around the criminal justice system. Many of these policies are used as deterrants of crime, with the assumption being that people inherently understand that these punishments exist and as such will be less likely to commit crimes (in order to avoid the punishment). 
 
-*Probability of arrest* 
+Please note that the 3 "efficiency" variables below were initially called "probabilities". However, this is 
 
-If we find that the probability of arrest is associated with crime rate (with higher punishment associted with higher crime), we may consider stricter policies around police practice that encourage more arrests. 
+*Efficiency of arrest* 
 
-- `prbarr`: 'probability' of arrest
+If we find that the efficiency of arrest is associated with crime rate (with higher punishment associted with higher crime), we may consider stricter policies around police practice that encourage more arrests. 
 
-*Probability of conviction* 
+- `prbarr`: number of convictions for every crime reported
 
-If we find that the probability of conviction is associated with crime rate (with higher conviction rates associted with higher crime), we may consider stricter policies around court practices so that more arrests lead to convictions.
+*Efficiency of conviction* 
 
-- `prbconv`: 'probability' of conviction
+If we find that the efficiency of conviction is associated with crime rate (with higher conviction rates associted with higher crime), we may consider stricter policies around court practices so that more arrests lead to convictions.
 
-*Probability of sentencing* 
+- `prbconv`: number of convictions for every arrest made
 
-If we find that the probability of sentencing is associated with crime rate (with higher sentencing rates associted with higher crime), we may consider stricter policies around judicial practices so that more convictions lead to sentencing.
+*Efficiency of sentencing* 
 
-- `prbpris`: 'probability' of prison sentence 
+If we find that the efficiency of sentencing is associated with crime rate (with higher sentencing rates associted with higher crime), we may consider stricter policies around judicial practices so that more convictions lead to sentencing.
+
+- `prbpris`: number of prison sentences for every conviction
+
+We can combine the three above variables into one variable (`eff_cj`) that is a measure of the efficiency of the criminal justice process in each county: 
+
+eff_cj <- `prbarr` * `prbconv` * `prbpris` 
 
 *Severity of punishment* 
 
 If we find that the severity of punishment is associated with crime rate (with greater severity associted with lower crime), we may consider stricter policies around judicial practices so that people receive more severe punishments if sentenced with a crime.
 
 - `avgsen`:	avg. sentence, days 
+
+*Number of policy officers per capita*
+
+The number of police police officers per capita (measured by the variable
+`polpc`) is a very intuitive example of crime deterrant, as it in theory
+increases the likelyhood of being caught in the act of the crime and is
+also a measure of the capacity of the State to enforce the law.
+
+As our job is to advise a policy maker, it’s very important that we feel
+safe about the causal interpretation of our findings. After all, the
+idea is to propose policies with a significant impact on people’s
+lives. A cross section of counties tough does not allow us to link
+police presence to crime rates with a causal interpretation. This is
+because one can expect the counties with larger crime rates in a year t
+would consider necessary to have a larger number of police officers in
+on the streets in year t, which can imply a positive correlation between
+presence of police and crime rates with no causal meaning.
+
+Thus, in this exercise we opted not to include police per capita as a
+candidate of policy variable - instead, we we’ll include it as a control
+variable to access the effectiveness of shifts in other criminal justice
+variables (probabilities of arrest, conviction and prision sentence) on
+crime rates.
 
 
 ## Contextual Variables
@@ -86,9 +119,6 @@ The following variables describe different aspects of the people that reside in 
 
 - `pctymle`:	percent young male 
 
-*Wealth*
-
-- `taxpc`:	tax revenue per capita 
 
 ### Geography
 
@@ -114,6 +144,7 @@ Your introduction should present a research question and explain the concept tha
 library(tidyverse) # for data import, manipulation, viz
 library(corrplot) # for correlation matix
 library(stargazer) # visualize model fit
+library(skimr) # generate summary statistics
 ```
 
 #### Import Data
@@ -173,13 +204,17 @@ length(unique(data2$county)) == length(data2$county) # check 1 obs per county
 str(data2) # examine dataframe 
 ```
 
-##### Missingness
+##### Missingness & Data Validity
 
-We can see from the following that we don't have any missing data, which is good! 
+We can see from the following table that we don't have any missing data, which is good! 
+
+However, we can see by the max for each column (p100), that we appear to have a few values that are extremely high. 
+
+For example, one county has an average sentence length (`avgsen`) of 20.7 years.
 
 ```{r}
-pct_miss <- data %>% map(~ mean(is.na(.)))
-pct_miss
+data2_skim <- skim(data2)
+data2_skim
 ```
 
 ##### Preserve Clean Data
@@ -278,7 +313,7 @@ data_cj_long <- data2 %>% select(prbarr, prbconv, prbpris) %>%
 data_cj_long$var <- factor(data_cj_long$var, labels = c("Prob Arrest", "Prob Convicted", "Prob Sentenced"))
 ```
 
-We can see that we have different distributions for these, but that they all could be considered somewhat close to normal, with different levels of skew. Probability of conviction appears to be closest to a normal distribution. 
+We can see that we have different distributions for these, but that they all could be considered somewhat close to normal, with different levels of skew. efficiency of conviction appears to be closest to a normal distribution. 
 
 ```{r}
 # plot hist subplots
@@ -286,10 +321,10 @@ ggplot(data_cj_long, aes(value)) +
   geom_histogram(bins = 50) +
   facet_grid(~var) +
   theme_minimal() +
-  ggtitle("Histogram of Criminal Justice Policy Variables: Probability Variables")
+  ggtitle("Histogram of Criminal Justice Policy Variables: efficiency Variables")
 ```
 
-From our boxplots we can see that we have some extreme values for probability of conviction, with multiple counties having a rate above 1. As these are not true probabilities, but rather ratios, these values are not necessarily spurious. However, they imply that for each arrest, there could be multiple convictions - one county has over 2 convictions for every arrest. Only 1 county has more than 1 arrest per crime committed - most counties in fact have a much lower rate (and only put someone under arrest for about one-quarter of crimes). When it comes to setencing, counties show a much lower spread and cluster around 1 conviction resulting in a prison sentence for every 1 conviction that does not. 
+From our boxplots we can see that we have some extreme values for efficiency of conviction, with multiple counties having a rate above 1. As these are not true probabilities, but rather ratios, these values are not necessarily spurious. However, they imply that for each arrest, there could be multiple convictions - one county has over 2 convictions for every arrest. Only 1 county has more than 1 arrest per crime committed - most counties in fact have a much lower rate (and only put someone under arrest for about one-quarter of crimes). When it comes to setencing, counties show a much lower spread and cluster around 1 conviction resulting in a prison sentence for every 1 conviction that does not. 
 
 ```{r}
 # plot boxplot subplots 
@@ -298,7 +333,7 @@ ggplot(data_cj_long, aes(x = var, y = value)) +
   theme_minimal() +
   xlab("") +
   ylab("Ratio") + 
-  ggtitle("Boxplot of Criminal Justice Policy Variables: Probability Variables")
+  ggtitle("Boxplot of Criminal Justice Policy Variables: efficiency Variables")
 ```
 
 
@@ -479,67 +514,76 @@ m6 <- lm(log(crmrte) ~  prbarr + prbpris + log(avgsen) + log(polpc) + mix + log(
 #m4 <- glm(fast ~ hp + drat + am, family=binomial(link="logit"), data=mydata) stargazer(m1, m2, m3, m4, type="text",
                                                                                        #dep.var.labels=c("Miles/(US) gallon","Fast car (=1)"), covariate.labels=c("Gross horsepower","Rear axle ratio","Four foward gears",
 stargazer(m1, m2, m3, m4, m5, m6, type="text",
-          dep.var.labels=c("ln(Crimes committed per person)"), covariate.labels=c("'Probability' of arrest", "'Probability' of prison sentence",   "ln(Avg. sentence, days)", "ln(Police per capita)",  "Offense mix: face-to-face/other",   "ln(People per sq. mile)",  "Percent young male", "Perc. minority, 1980", "=1 if in western N.C.", "=1 if in central N.C.",  "=1 if in SMSA", "ln(Average sector wkly wage)", "ln(Tax revenue per capita)"), out="models.txt")
+          dep.var.labels=c("ln(Crimes committed per person)"), covariate.labels=c("'efficiency' of arrest", "'efficiency' of prison sentence",   "ln(Avg. sentence, days)", "ln(Police per capita)",  "Offense mix: face-to-face/other",   "ln(People per sq. mile)",  "Percent young male", "Perc. minority, 1980", "=1 if in western N.C.", "=1 if in central N.C.",  "=1 if in SMSA", "ln(Average sector wkly wage)", "ln(Tax revenue per capita)"), out="models.txt")
 
 ```
 
 ### Alissa
 
-DV: `crmrte`
+**Model 1** 
+
+DV: 
+
+*Crime*
+
+log(`crmrte`)
+
+* take the log because it makes intuitive sense -- represents increase in crime 
 
 IV: 
-crime policy --> "prbarr", "prbconv", "avgsen" 
-* Picked lower wages (based on boxplots)* -- would be more likely to affect w/ min wage policy 
-econ policy --> "wser", "wtrd" 
-covariates -- 
-"mix"
-"density" -- more crime if more people 
+
+*Crime policy* 
+
+(1) log(eff_cj) <- log(`prbarr` * `prbconv` * `prbpris`)
+
+
+*Economic policy* 
+
+Picked lower wages (based on boxplots)* -- would be more likely to affect w/ min wage policy 
+econ policy --> 
+
+(2) log(`wser`)
+(3) log(`wtrd`)
+
+```{r}
+data2 <- data2 %>% mutate(eff_cj = prbarr*prbconv*prbpris)
+```
+
+```{r}
+mod1a <- lm(log(crmrte) ~ log(eff_cj) + log(wser) + log(wtrd) + log(taxpc), data = data2)
+mod1b <- lm(crmrte ~ eff_cj + wser + wtrd, data = data2)
+mod1c <- lm(log(crmrte) ~ log(eff_cj), data = data2)
+stargazer(mod1a, mod1b, mod1c, type = "text")
+```
+
+Try without the `avgsen` outlier.
+
+```{r}
+data3 <- data2 %>% filter(avgsen != max(avgsen))
+```
+
+It actually seems to reduce the fit. Need to quantify its pull. 
+
+```{r}
+mod1d <- lm(log(crmrte) ~ log(eff_cj) + log(wser) + log(wtrd) + log(taxpc), data = data3)
+stargazer(mod1a, mod1d, type = "text")
+```
+
+*need to check assumptions* 
+
+**Model 2** 
+
+covariates:
+
+`mix` -- type of crime 
+`density` -- more crime if more people 
 `pctymle` -- riskier pop
-pctmin80 -- minority status
-
-
-```{r}
-m1 <- lm(crmrte ~ prbarr , data = data2)
-summary(m1)
-m2 <- lm(crmrte ~ prbarr + prbconv, data = data2)
-summary(m2)
-m3 <- lm(crmrte ~ prbarr + prbconv + log(polpc), data = data2)
-summary(m3)
-m4 <- lm(crmrte ~ prbarr + prbconv + log(polpc) + wser, data = data2)
-summary(m4)
-m5 <- lm(crmrte ~ prbarr + prbconv + log(polpc) + wser + wtrd, data = data2)
-summary(m5)
-m6 <- lm(crmrte ~ prbarr + prbconv + log(polpc) + wser + wtrd + mix, data = data2)
-summary(m6)
-m7 <- lm(crmrte ~ prbarr + prbconv + log(polpc) + wser + wtrd + mix + density, data = data2)
-summary(m7)
-m8 <- lm(crmrte ~ prbarr + prbconv + log(polpc) + wser + wtrd + mix + density + pctymle, data = data2)
-summary(m8)
-m9 <- lm(crmrte ~ prbarr + prbconv + log(polpc) + wser + wtrd + mix + density + pctymle + pctmin80, data = data2)
-summary(m9)
-
-# model w/o 
-m10 <- lm(log(crmrte) ~ prbarr + prbconv + avgsen + wser + wtrd + mix + density + pctymle + pctmin80, data = data2)
-summary(m10)
-
-```
+`pctmin80` -- minority status
 
 ```{r}
-m1 <- lm(log(crmrte) ~ prbarr , data = data2)
-m2 <- lm(log(crmrte) ~ prbarr + prbconv, data = data2)
-m3 <- lm(log(crmrte) ~ prbarr + prbconv + avgsen, data = data2)
-m4 <- lm(log(crmrte) ~ prbarr + prbconv + avgsen + wser, data = data2)
-m5 <- lm(log(crmrte) ~ prbarr + prbconv + avgsen + wser + wtrd, data = data2)
-m6 <- lm(log(crmrte) ~ prbarr + prbconv + avgsen + wser + wtrd + mix, data = data2)
-m7 <- lm(log(crmrte) ~ prbarr + prbconv + avgsen + wser + wtrd + mix + density, data = data2)
-m8 <- lm(log(crmrte) ~ prbarr + prbconv + avgsen + wser + wtrd + mix + density + pctymle, data = data2)
-m9 <- lm(log(crmrte) ~ prbarr + prbconv + avgsen + wser + wtrd + mix + density + pctymle + pctmin80, data = data2)
-summary(m9)
-
-
-
+mod2a <- lm(log(crmrte) ~ log(eff_cj) + log(wser) + log(wtrd) + log(taxpc) + mix + density + pctymle + pctmin80, data = data3)
+stargazer(mod2a, type = "text")
 ```
-
 
 
 
