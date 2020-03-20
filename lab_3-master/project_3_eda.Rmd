@@ -107,7 +107,7 @@ The following variables appear to be related to our target (crime). The first (`
 - `prbpris`: 'probability' of prison sentence
 - `avgsen`:	avg. sentence, days
 
-## Law Enforcement
+### Law Enforcement
 
 - `polpc`:	police per capita
 

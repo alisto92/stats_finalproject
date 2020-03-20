@@ -7,17 +7,20 @@ output: html_notebook
 library(tidyverse) # for data import, manipulation, viz
 load("~/Documents/GitHub/Berkeley_DS/w203_stats/w203_project3/lab_3-master/data_clean.rda")
 filter <- dplyr::filter
+library(car)
+library(lmtest)
+library(stargazer)
 
 crime_df = data2
 ```
 
+# EDA
+
+## Dependent Variable: Crime Rate
+
 ```{r}
-summary(crime_df)
+str(crime_df$crmrte)
 ```
-
-## Explore variables
-
-### Crime Rate
 
 ```{r}
 summary(crime_df %>% select(crmrte))
@@ -33,173 +36,313 @@ This variable follows a quasi-normal distribution with a slight skew to the left
 
 ```{r}
 qqnorm(crime_df$crmrte)
+qqline(crime_df$crmrte)
 ```
 
-The Q-Q plot shows that the `crmrte` variable approaches a normal distribution.
+The Q-Q plot shows that the `crmrte` variable is not normal. There is heavy positive skewness.
+
+## Independent Variables: Criminal Justice System 
+
+```{r}
+crime_df = crime_df %>%  mutate(pris_crime_rt = prbarr * prbconv * prbpris)
+
+justice_sys_df =  crime_df %>% 
+  select(crmrte, prbarr, prbconv, prbpris, avgsen, pris_crime_rt)
+print("Summary Statistics of Criminal Justice System Variables")
+summary(justice_sys_df)
+```
 
 ### Probability of Arrest
 
 ```{r}
-prbarr_df = crime_df %>% select(prbarr)
-summary(prbarr_df)
+paste("Number of Observations:", length(justice_sys_df$prbarr))
 ```
 
 ```{r}
-paste("Number of Observations:", dim(prbarr_df)[1])
-```
-
-Dropped one value with greater than 1 probability of arrest
-
-```{r}
-ggplot(prbarr_df, aes(x = prbarr)) +
+ggplot(justice_sys_df, aes(x = prbarr)) +
   geom_histogram(bins = 30)
 ```
 
-```{r}
-qqnorm(prbarr_df$prbarr)
-```
-
-The probability of arrest's ditribution also approximates a normal distribution but to a lesser degree than crime rate.
-
-### probability of conviction
+There seems to be some outliers after 0.6. There is one data point over the value of 1, which is the most suspicious.
 
 ```{r}
-prbconv_df = crime_df %>% select(prbconv)
-print(paste("Number of Observations:", dim(prbconv_df)[1]))
-print("Summary Statistics of Probability of Conviction")
-summary(prbconv_df)
+qqnorm(justice_sys_df$prbarr)
+qqline(justice_sys_df$prbarr)
+```
+
+The probability of arrest's ditribution also approximates a normal distribution. Mostly positive skeewness and one outlier affects the normality of the variable's sample distribution.
+
+### Probability of Conviction
+
+```{r}
+paste("Number of Observations:", length(justice_sys_df$prbconv))
 ```
 
 ```{r}
-ggplot(prbconv_df, aes(x = prbconv)) +
-  geom_histogram()
+ggplot(justice_sys_df, aes(x = prbconv)) +
+  geom_histogram(bins = 10)
 ```
+
+There seems to be some outliers around 2. There distribution is positively skewed.
 
 ```{r}
 qqnorm(prbconv_df$prbconv)
+qqline(prbconv_df$prbconv)
 ```
 
-The probability of conversion seem to follow a normal distribution quite closely.
+The probability of conversion has some heavy positive skewness and some outliers to the right.
 
 ### Probability of Prison Sentence
 
 ```{r}
-prbpris_df = crime_df %>% select(prbpris)
-print(paste("Number of Observations:", dim(prbpris_df)[1]))
-print("Summary Statistics of Prision Sentence")
-summary(prbpris_df$prbpris)
+print(paste("Number of Observations:", length(justice_sys_df$prbpris)))
 ```
 
 ```{r}
-ggplot(prbpris_df, aes(x = prbpris)) +
+ggplot(justice_sys_df, aes(x = prbpris)) +
   geom_histogram()
 ```
 
 ```{r}
 qqnorm(prbpris_df$prbpris)
+qqline(prbpris_df$prbpris)
 ```
 
-### Correlation Matrix
-
-Correlation matrix for potential objective variable.
-
-```{r}
-target_df = crime_df %>% select(crmrte, prbarr, prbconv, prbpris)
-cor(target_df)
-```
-
-crmrte: Medium negative correlation with `prbarr` and `prbconv`. Low positive correlation with `prbpris`
-prbarr: Low correlation with `prbconv` and `prbpris`.
-prbconv: Low correlation with `prbpris`.
-prbpris: Low correlation with all.
-
-**Single Variable Conclusion:** `crmrte` and `prbpris` have the most normal distribution of the four variables. Note that those variable are not correlated with each other.
-
-## Independent Variable analysis
 
 ### Average Sentence (days)
 
 ```{r}
-avgsen_df = crime_df %>% select(avgsen) 
-print(paste("Number of Observations:", dim(avgsen_df)[1]))
-summary(avgsen_df)
+print(paste("Number of Observations:", length(justice_sys_df$avgsen)))
 ```
 
-```{r}
-ggplot(avgsen_df, aes(x = avgsen)) +
-  geom_histogram()
-```
-
+We seem to have some outliers after 20. The distribution of the variable doesn't seem very normal.
 
 
 ```{r}
-qqnorm(avgsen_df$avgsen)
+qqnorm(justice_sys_df$avgsen)
+qqline(justice_sys_df$avgsen)
 ```
 
-Fairly normally distributed.
-
-### Police per Capita
+Fairly normally distributed but the aglomeration on the left side and some outliers on the right make the sample distribution less normal.
 
 ```{r}
-polpc_df = crime_df %>% select(polpc)
-print(paste("Number of Observations:", dim(polpc_df)[1]))
-print("Summary Statistics of Police per Capita")
-summary(polpc_df$polpc)
+ggplot(justice_sys_df, aes(x = avgsen)) +
+  geom_histogram(bins = 40)
 ```
 
+### Feature Engineering: Prision Sentence to Crime Ratio
 ```{r}
-ggplot(polpc_df, aes(x = polpc)) +
-  geom_histogram()
-```
-
-Not normal but with skew to the left.
-
-```{r}
-polpc_df = polpc_df %>% mutate(polpc_ln = log(polpc)) %>% select(polpc, polpc_ln) 
-
-ggplot(polpc_df, aes(x = polpc_ln)) +
-  geom_histogram()
-```
-
-Log transforming `polpc` makes the data more normally distributed.
-
-```{r}
-qqnorm(polpc_df$polpc_ln)
-```
-
-Fairly normal.
-
-### Correlation
-
-```{r}
-cor(avgsen_df$avgsen, polpc_df$polpc_ln)
-```
-
-Medium positive correlation.
-
-## Test Bivariate Relationshiop
-
-```{r}
-plot(x = crime_df$crmrte, y = crime_df$avgsen, main = "Scatterplot of Crime Rate vs Average Sentence")
-```
-```{r}
-polpc_md = lm(crime_df$crmrte ~ log(crime_df$polpc))
-polpc_md$coefficients
+ggplot(justice_sys_df, aes(x = prbarr * prbconv * prbpris)) +
+  geom_histogram(bins = 50)
 ```
 
 
+### Corellation
+
+Correlation matrix for potential objective variable.
+
 ```{r}
-ggplot(crime_df, aes(x=crmrte, y=log(polpc + 1))) + 
+cor(justice_sys_df, method = "spearman")  # using spearman's correlation because the variables don't follow a normal distribution
+```
+
+prbarr: Low correlation with `prbconv` and `prbpris` and `avgsen`.
+prbconv: Low correlation with `prbpris`and `avgsen`.
+prbpris: Low correlation with `avgsen`.
+avgsen: Low correlation with all.
+pris_crime_rt: High correlation with `prbarr` and `prbconv` and `prbpris`.
+
+All the Criminal Justice System variables have low correlation with each other, which gives us confident that we can include them all in a model and that doing so will not increase the variance of our coefficients. 
+
+### Bivariate Analysis
+
+#### Crime Rate vs Probability of Arrest
+
+```{r}
+ggplot(crime_df, aes(x=prbarr, y=crmrte)) + 
+  geom_point()+
+  geom_smooth(method=lm, se=FALSE) +
+  ggtitle("Scatterplot of Crime Rate vs Probability of Arrest")
+```
+
+Clear negative relationship. The higher the Probability of Arrest, the lower the Crime Rate.
+
+#### Crime Rate vs Probability of Conviction
+
+```{r}
+ggplot(crime_df, aes(x=prbconv, y=crmrte)) + 
   geom_point()+
   geom_smooth(method=lm, se=FALSE)
 ```
 
+Negative realtionship although there is some positive data skewness.
+
+#### Crime Rate vs Probability of Prision
+
 ```{r}
-cor(crime_df$polpc, crime_df$prbarr)
+ggplot(crime_df, aes(x=prbpris, y=crmrte)) + 
+  geom_point()+
+  geom_smooth(method=lm, se=FALSE)
+```
+
+There is no strong correlation between Probability of Prision and Crime Rate. Test linear model with and without Probabiity of Prision.
+
+#### Crime Rate vs Avegace Sentence (days)
+
+```{r}
+ggplot(crime_df, aes(x=avgsen, y=crmrte)) + 
+  geom_point()+
+  geom_smooth(method=lm, se=FALSE)
+```
+
+There is no strong correlation between Probability of Prision and Crime Rate. Test linear model with and without avgsen.
+
+
+```{r}
+ggplot(crime_df, aes(x= (prbarr* prbconv * prbpris),  y=crmrte)) + 
+  geom_point()+
+  geom_smooth(method=lm, se=FALSE)
+```
+
+### Liner Models
+
+```{r}
+justice_sys_1_md = lm(crmrte ~ prbarr + prbconv, data = justice_sys_data_df)
+justice_sys_1_md$coefficients
 ```
 
 ```{r}
-ggplot(crime_df, aes(x=prbarr, y=polpc)) + 
-  geom_point() +
+plot(justice_sys_1_md)
+```
+
+**Zero Conditional Mean:** The residuals don't seem to have a zero conditional mean. This is not a major issue because we have large sample size so we can invoke the CLT to have more confidence on the coefficients.
+
+**Normality of Errors:** The residuals have a fairly normal distirbution with the exception of some positve skewness.
+
+**Heteroskadiscity**: Complete violation.
+
+**Outliers:** There is one observation with high leverage and influence.
+
+Next Steps: In order to address the Zero Conditional Mean and Heteroskasdiscity issues, we will ;og-transform crmrte, prbarr, and prbconv. Those variables had a positively skewed distribution so a log transform could help. Note that all variables have values greater than zero so we can log-transform them without issues.
+
+
+```{r}
+justice_sys_2_md = lm(log(crmrte) ~ log(prbarr) + log(prbconv), data = justice_sys_df)
+justice_sys_2_md$coefficients
+```
+
+```{r}
+plot(justice_sys_2_md)
+```
+
+**Zero Conditional Mean:** Although the residuals don't seem to have a perfect zero conditional mean, the residuals have gotten much closer to zero conditional mean.
+
+**Normality of Errors:** The residuals have a fairly normal distirbution with the exception of some positve skewness.
+
+**Heteroskadiscity**: Complete violation. We would need to use standard errors with White's adjustment to assess signficance of t-values.
+
+**Outliers:** There is one observation with high leverage but not high influence.
+
+Next Steps: Heteroskadiscity could be a sign of omitted variables. We will add the remainder 
+
+```{r}
+justice_sys_3_md = lm(log(crmrte) ~ log(prbarr) + log(prbconv) + prbpris + avgsen, data = justice_sys_df)
+justice_sys_3_md$coefficients
+```
+```{r}
+plot(justice_sys_3_md)
+```
+
+**Zero Conditional Mean:** Although the residuals don't seem to have a perfect zero conditional mean, the residuals have gotten much closer to zero conditional mean.
+
+**Normality of Errors:** The residuals have a fairly normal distirbution with the exception of some positve skewness.
+
+**Heteroskadiscity**: Complete violation. We would need to use standard errors with White's adjustment to assess signficance of t-values.
+
+**Outliers:** There is one observation with high leverage but not high influence.
+
+Next Steps: There was no impact on adding the `prbpris` and `avgsen`. We will exclude those from the model for now.
+
+```{r}
+justice_sys_4_md = lm(log(crmrte) ~ log(pris_crime_rt), data = justice_sys_df)
+justice_sys_4_md$coefficients
+```
+
+```{r}
+plot(justice_sys_4_md)
+```
+
+**Zero Conditional Mean:** Although the residuals don't seem to have a perfect zero conditional mean, the residuals have gotten much closer to zero conditional mean.
+
+**Normality of Errors:** The residuals have a fairly normal distirbution with the exception of some positve skewness.
+
+**Heteroskadiscity**: Complete violation. We would need to use standard errors with White's adjustment to assess signficance of t-values.
+
+**Outliers:** There is one observation with high leverage but not high influence.
+
+## Law Enforcement
+
+
+### Police per Capita
+
+```{r}
+justice_police_df =  crime_df %>% select(crmrte, prbarr, prbconv, prbpris, avgsen, polpc, pris_crime_rt)
+summary(justice_police_df)
+```
+
+```{r}
+ggplot(justice_police_df, aes(x = polpc)) +
+  geom_histogram()
+```
+
+
+```{r}
+qqnorm(justice_police_data_df$polpc)
+qqline(justice_police_data_df$polpc)
+```
+
+Strong positive skewness and outlier.
+
+
+### Correlation
+
+```{r}
+cor(justice_police_df, method = "spearman")
+```
+
+polpc: medium positive correlation with `prbconv` and `avgsen` and `pris_crime_rt`.
+
+Note that `polpc` has high correlation with `pris_crime_rt` so it could impact the efficiency of our coefficient estimation if both variables are included in the model.
+
+### Bivariate Analysis
+
+#### Crime Rate vs Police per Capita
+
+We log-transform the `polpc` variable because we had noticed that doing so for positively-skewed variable reduced residuals.
+
+```{r}
+ggplot(crime_df, aes(x=log(polpc), y=log(crmrte))) + 
+  geom_point()+
   geom_smooth(method=lm, se=FALSE)
 ```
+
+### Linear Models
+
+```{r}
+justice_police_md = lm(log(crmrte) ~ log(prbarr) + log(prbconv) + log(polpc), data = justice_police_df)
+justice_police_md$coefficients
+```
+
+
+```{r}
+plot(justice_police_md)
+```
+
+**Zero Conditional Mean:** No noticible improvement compared to $crimeRate = \beta_0 + \beta_1 * prisCrimeRt + \hat{u}$
+
+**Normality of Errors:** The residuals have a fairly normal distirbution with the exception of some positve skewness.
+
+**Heteroskadiscity**: Although the residuals are still not heteroskadistic, there has been some improvement. 
+
+**Outliers:** There is one observation with high leverage but not high influence.
+
+Next Steps: Heteroskadiscity could be a sign of omitted variables.
