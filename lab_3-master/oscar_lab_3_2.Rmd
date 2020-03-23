@@ -1,0 +1,364 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r, message=FALSE}
+library(tidyverse) # for data import, manipulation, viz
+library(corrplot) # for correlation matix
+library(stargazer) # visualize model fit
+library(skimr) # generate summary statistics
+library(car) # statistics 
+library(lmtest) # linear modeling
+```
+
+```{r}
+str(crime_df)
+```
+
+```{r}
+wages_df = crime_df %>% mutate(crmrte_shift = crmrte + 1) %>% 
+  select(crmrte_shift, wcon, wtuc, wtrd, wfir, wser, wmfg, wfed, wsta, wloc, taxpc) %>% 
+  mutate_all(., log)
+cor(wages_df)
+```
+
+`wcon`: construction wages have high positive correlation with all wages but no correlation with `wsta` and `wser`.
+`wtuc`: utility wages have high positive correlation with all wages but no correlation with `wsta` and `wser`.
+`wtrd`: retail wages have high positive correlation with all wages but no correlation with `wsta` and `wser`.
+`wfir`: finance wages have high positive correlation with all wages but no correlation with `wsta` and `wser`.
+`wser`: service wages low correlation with all other wages and tax per capita
+`wmfg`: manufacturing wages have high positive correlation with all wages but no correlation with `wsta` and `wser`.
+`wfed`: fed employees wages have high positive correlation with all wages but no correlation with `wsta` and `wser`.
+`wsta`: state employees wages no correlation with any variable but a bit with fed employees
+`wloc`: local government employees wages have high correlation with all wages but `wsta`
+`taxpc`: no correlation with any
+
+```{r}
+ggplot(wages_df, aes(x=log(wcon), y=log(crmrte))) + 
+  geom_point()+
+  geom_smooth(method=lm, se=FALSE)
+```
+
+Wage Construction and Crime Rate have a high correlation
+
+```{r}
+ggplot(wages_df, aes(x=log(wtuc), y=log(crmrte + 1))) + 
+  geom_point()+
+  geom_smooth(method=lm, se=FALSE)
+```
+
+```{r}
+ggplot(wages_df, aes(x=log(wtrd), y=log(crmrte + 1))) + 
+  geom_point()+
+  geom_smooth(method=lm, se=FALSE)
+```
+
+```{r}
+ggplot(wages_df, aes(x=log(wfir), y=log(crmrte + 1))) + 
+  geom_point()+
+  geom_smooth(method=lm, se=FALSE)
+```
+
+
+
+```{r}
+ggplot(wages_df, aes(x=log(wser), y=log(crmrte + 1))) + 
+  geom_point()+
+  geom_smooth(method=lm, se=FALSE)
+```
+
+
+```{r}
+ggplot(wages_df, aes(x=log(wmfg), y=log(crmrte + 1))) + 
+  geom_point()+
+  geom_smooth(method=lm, se=FALSE)
+```
+
+
+```{r}
+ggplot(wages_df, aes(x=log(wfed), y=log(crmrte + 1))) + 
+  geom_point()+
+  geom_smooth(method=lm, se=FALSE)
+```
+
+
+```{r}
+ggplot(wages_df, aes(x=log(wsta), y=log(crmrte + 1))) + 
+  geom_point()+
+  geom_smooth(method=lm, se=FALSE)
+```
+
+
+```{r}
+ggplot(wages_df, aes(x=log(wloc), y=log(crmrte + 1))) + 
+  geom_point()+
+  geom_smooth(method=lm, se=FALSE)
+```
+
+Wage Service and Crime Rate have no relationship. It could be because tips are an important part of the Service industry and they are not tracked easily.
+
+```{r}
+ggplot(wages_df, aes(x=log(taxpc), y=log(crmrte + 1))) + 
+  geom_point()+
+  geom_smooth(method=lm, se=FALSE)
+```
+
+Include `wloc` and `wsta` and `wtrd`.
+
+`wtrd` and `wcon` and `wfir` and `wmfg` 
+
+Then include `taxpc`.
+
+```{r}
+data2 <- data2 %>% mutate(eff_cj = prbarr*prbconv*prbpris)
+```
+
+```{r}
+model1 = lm(log(crmrte + 1) ~ log(eff_cj) + log(wloc) + log(wsta) + log(wtrd), data = data2)
+model1$coefficients
+```
+
+
+```{r}
+eff_cj_md = lm(log(crmrte) ~ log(eff_cj), data = data2)
+eff_cj_md$coefficients
+```
+
+
+```{r}
+plot(eff_cj_md)
+```
+
+```{r}
+wloc_md = lm(log(crmrte) ~ log(eff_cj) + log(wloc), data = data2)
+wloc_md$coefficients
+```
+
+
+```{r}
+plot(wloc_md)
+```
+
+```{r}
+wloc_tax_md = lm(log(crmrte) ~ log(eff_cj) + log(wloc) + log(taxpc), data = data2)
+wloc_tax_md$coefficients
+```
+
+
+```{r}
+plot(wloc_tax_md)
+```
+
+```{r}
+wloc_trd_tax_md = lm(log(crmrte) ~ log(eff_cj) + log(wloc) + log(wtrd) + log(taxpc), data = data2)
+wloc_trd_md$coefficients
+```
+
+
+```{r}
+plot(wloc_trd_tax_md)
+```
+
+
+No noticeable improvement from adding `wcon`
+```{r}
+wloc_con_md = lm(log(crmrte) ~ log(eff_cj) + log(wloc) + log(wcon), data = data2)
+wloc_con_md$coefficients
+```
+
+
+```{r}
+plot(wloc_con_md)
+```
+
+
+
+No noticeable improvement by adding `wtrd`
+```{r}
+wloc_trd_md = lm(log(crmrte) ~ log(eff_cj) + log(wloc) + log(wtrd), data = data2)
+wloc_trd_md$coefficients
+```
+
+
+```{r}
+plot(wloc_trd_md)
+```
+
+
+
+No noticible improvement by adding `wsta`
+```{r}
+wloc_sta_md = lm(log(crmrte) ~ log(eff_cj) + log(wloc) + log(wsta), data = data2)
+```
+
+
+```{r}
+plot(wloc_sta_md)
+```
+
+
+```{r}
+wtrd_md = lm(log(crmrte) ~ log(eff_cj) + log(wtrd), data = data2)
+wtrd_md$coefficients
+```
+
+
+```{r}
+plot(wtrd_md)
+```
+
+# deomographics
+
+```{r}
+demo_df =  data2 %>%  select(crmrte, eff_cj, wloc, wtrd, density, pctmin80, pctymle) %>%
+  mutate_all(., log)
+cor(demo_df)
+```
+
+
+```{r}
+wloc_md = lm(log(crmrte) ~ log(eff_cj) + log(wloc), data = data2)
+wloc_md$coefficients
+```
+
+
+```{r}
+plot(wloc_md)
+```
+
+
+```{r}
+ymale_min_md = lm(log(crmrte) ~ log(eff_cj) + log(wloc) + pctmin80 + log(pctymle), data = data2)
+ymale_min_md$coefficients
+```
+
+
+```{r}
+plot(ymale_min_md)
+```
+
+```{r}
+ymale_density_min_md = lm(log(crmrte) ~ log(eff_cj) + log(wloc) + pctmin80 + log(density) + log(pctymle), data = data2)
+ymale_density_min_md$coefficients
+```
+
+
+```{r}
+plot(ymale_density_min_md)
+```
+
+
+
+Improves Heteroskedasticity
+```{r}
+density_min_md = lm(log(crmrte) ~ log(eff_cj) + log(wloc) + pctmin80 + log(density), data = data2)
+density_min_md$coefficients
+```
+
+
+```{r}
+plot(density_min_md)
+```
+
+
+Improves zero conditional mean and heteroskedasticity significantly
+```{r}
+min_md = lm(log(crmrte) ~ log(eff_cj) + log(wloc) + pctmin80 , data = data2)
+min_md$coefficients
+```
+
+
+```{r}
+plot(min_md)
+```
+
+
+```{r}
+wtrd_min_md = lm(log(crmrte) ~ log(eff_cj) + log(wtrd) + log(pctmin80) , data = data2)
+wtrd_min_md$coefficients
+```
+
+
+```{r}
+plot(wtrd_min_md)
+```
+
+No change after adding `pctymle`
+```{r}
+ymale_md = lm(log(crmrte) ~ log(eff_cj) + log(wloc) + log(pctymle), data = data2)
+ymale_md$coefficients
+```
+
+
+```{r}
+plot(ymale_md)
+```
+
+## geography
+
+
+```{r}
+geo_df = data2 %>% mutate(ln_crmrte = log(crmrte), ln_eff_cj = log(eff_cj), ln_wloc = log(wloc), ln_density = log(density), ln_taxpc = log(taxpc)) %>% 
+  mutate(west_proper = ifelse(west == 1 & central != 1, 1, 0), central_proper = ifelse(west != 1 & central == 1, 1, 0)) %>% 
+  select(ln_crmrte, ln_eff_cj, ln_wloc, ln_density, ln_taxpc, pctmin80, urban, west, central, west_proper)
+
+cor(geo_df)
+```
+`pctmin80` has high correlation with `west` but it has opposite impact on `crmrte`.
+`urban` is highly correlated with other variables, exclude.
+There is some overlap between `west` or `central` though they have opposity effects on `crmrte`. Parse variables. 
+test: `pctmin80` vs `west_proper`.
+
+```{r}
+data2 = data2 %>% mutate(west_proper = ifelse(west == 1 & central != 1, 1, 0))
+```
+
+
+Benchmark
+```{r}
+density_min_md = lm(log(crmrte) ~ log(eff_cj) + log(wloc) + log(density) + pctmin80, data = data2)
+density_min_md$coefficients
+```
+
+
+```{r}
+plot(density_min_md)
+```
+
+```{r}
+wtrd_west_md = lm(log(crmrte) ~ log(eff_cj) + log(wtrd) + west_proper, data = data2)
+wtrd_west_md$coefficients
+```
+
+```{r}
+plot(wtrd_west_md)
+```
+
+west
+```{r}
+west_md = lm(log(crmrte) ~ log(eff_cj) + log(wloc) + log(density) + west_proper, data = data2)
+west_md$coefficients
+```
+
+```{r}
+plot(west_md)
+```
+
+
+```{r}
+plot(density_min_md$fitted.values, log(data2$crmrte), main = "Actual vs Predicted")
+abline(a=0,b=1)
+```
+
+```{r}
+plot(west_md$fitted.values, log(data2$crmrte), main = "Actual vs Predicted")
+abline(a=0,b=1)
+```
+
+```{r}
+stargazer(density_min_md, wtrd_west_md, type = "text")
+```
+
+
+
