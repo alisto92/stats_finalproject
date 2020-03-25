@@ -434,7 +434,7 @@ data2_skim
     ##  n obs: 90 
     ##  n variables: 24 
     ## 
-    ## ── Variable type:numeric ─────────────────────────────────────────────────
+    ## ── Variable type:numeric ────────────────────────────────────────────────────────────────
     ##  variable missing complete  n     mean        sd          p0      p25
     ##    avgsen       0       90 90   9.69     2.83        5.38      7.38  
     ##   central       0       90 90   0.38     0.49        0         0     
@@ -957,78 +957,77 @@ log(`crmrte`)
   - take the log because it makes intuitive sense – represents increase
     in crime
 
-IV:
+We originally used the following variables to predict crime:
 
 *Crime policy*
 
 1)  log(eff\_cj) \<- log(`prbarr` \* `prbconv` \* `prbpris`)
 
-2)  log(`avgsen`)
+2)  log(`avg_sen`)
 
 *Economic policy*
 
 Picked lower wages (based on boxplots)\* – would be more likely to
-affect w/ min wage policy econ policy
-–\>
+affect w/ min wage policy econ policy –\>
 
 3)  log(`wtrd`)
 
-<!-- end list -->
+However, `eff_cf` was significant for the criminal justice policy
+variables, thus we removed `avg_sen`. Our economic policy
+variable,`wtrd`, was significantly related to crime but not in the
+expected direction - the higher the wages, the higher the crime. Since
+`wtrd` and `density` are positively correlated, we thought that perhaps
+wages in this sector would be higher in cities and this omitted variable
+could be influencing the direction of the relationship between `wtrd`
+and `crmrte`.
 
 ``` r
 data2 <- data2 %>% mutate(eff_cj = prbarr*prbconv*prbpris)
 ```
 
+Approximately 30% of the variation in crime rate can be explained by the
+efficiency of the criminal justice process. Increasing the ratio of
+criminal justice practices to crime (increasing arrests, convictions,
+and sentencing) could help decrease the crime rate.
+
 ``` r
-mod1a <- lm(log(crmrte) ~ log(eff_cj) + log(avgsen) + log(wtrd), data = data2)
-mod1b <- lm(crmrte ~ eff_cj + avgsen + wtrd, data = data2)
-mod1c <- lm(log(crmrte) ~ log(eff_cj) + log(avgsen), data = data2)
-stargazer(mod1a, mod1b, mod1c, type = "text")
+mod1 <- lm(log(crmrte) ~ log(eff_cj), data = data2)
+stargazer(mod1, type = "text")
 ```
 
     ## 
-    ## ========================================================================================
-    ##                                             Dependent variable:                         
-    ##                     --------------------------------------------------------------------
-    ##                          log(crmrte)               crmrte              log(crmrte)      
-    ##                              (1)                    (2)                    (3)          
-    ## ----------------------------------------------------------------------------------------
-    ## log(eff_cj)               -0.443***                                     -0.469***       
-    ##                            (0.068)                                       (0.074)        
-    ##                                                                                         
-    ## log(avgsen)                 -0.076                                        0.013         
-    ##                            (0.161)                                       (0.174)        
-    ##                                                                                         
-    ## log(wtrd)                  1.269***                                                     
-    ##                            (0.303)                                                      
-    ##                                                                                         
-    ## eff_cj                                           -0.076***                              
-    ##                                                   (0.021)                               
-    ##                                                                                         
-    ## avgsen                                             0.001                                
-    ##                                                   (0.001)                               
-    ##                                                                                         
-    ## wtrd                                             0.0002***                              
-    ##                                                   (0.0001)                              
-    ##                                                                                         
-    ## Constant                  -11.464***               -0.015               -4.966***       
-    ##                            (1.604)                (0.012)                (0.443)        
-    ##                                                                                         
-    ## ----------------------------------------------------------------------------------------
-    ## Observations                  90                     90                     90          
-    ## R2                          0.431                  0.289                  0.315         
-    ## Adjusted R2                 0.411                  0.264                  0.299         
-    ## Residual Std. Error    0.421 (df = 86)        0.016 (df = 86)        0.459 (df = 87)    
-    ## F Statistic         21.721*** (df = 3; 86) 11.668*** (df = 3; 86) 20.015*** (df = 2; 87)
-    ## ========================================================================================
-    ## Note:                                                        *p<0.1; **p<0.05; ***p<0.01
+    ## ===============================================
+    ##                         Dependent variable:    
+    ##                     ---------------------------
+    ##                             log(crmrte)        
+    ## -----------------------------------------------
+    ## log(eff_cj)                  -0.470***         
+    ##                               (0.074)          
+    ##                                                
+    ## Constant                     -4.937***         
+    ##                               (0.225)          
+    ##                                                
+    ## -----------------------------------------------
+    ## Observations                    90             
+    ## R2                             0.315           
+    ## Adjusted R2                    0.307           
+    ## Residual Std. Error       0.457 (df = 88)      
+    ## F Statistic           40.481*** (df = 1; 88)   
+    ## ===============================================
+    ## Note:               *p<0.1; **p<0.05; ***p<0.01
 
 *need to check assumptions*
 
 **Model 2** – omitted variable bias –\> add in these contextual
 variables
 
-Might be missing the effect of:
+In our first model, we only explained 30% of the variation in crime.
+Additionally, only criminal justice policy appeared to be related.
+However, one can imagine that other factors (such as population density
+or demographic characteristics such as gender & race) would also be at
+play when it comes to crime. Thus, in our second model we included
+important covariates that could affect the relationship between criminal
+justice policy and crime.
 
   - `mix` – type of crime
       - More severe crime (face-to-face) could be related criminal
@@ -1045,317 +1044,42 @@ Might be missing the effect of:
   - `taxpc` – wealth
       - More wealth, less reason for crime – less crime
       - More tax revenue, more money for government to fight crime both
-        via criminal justice & economic
-system
+        via criminal justice & economic system
+  - `pctmin80` \* `density` – number of minorities per squared mile
+      - More minorities, more reported crime, more severe criminal
+        justice
+practice
 
 <!-- end list -->
 
 ``` r
-mod2a <- lm(log(crmrte) ~ log(eff_cj) + log(wtrd) + log(taxpc) + mix + density + pctymle + pctmin80, data = data2)
-stargazer(mod2a, type = "text")
+mod2 <- lm(log(crmrte) ~ log(eff_cj) + log(density *pctmin80) , data = data2)
+stargazer(mod2, type = "text")
 ```
 
     ## 
-    ## ===============================================
-    ##                         Dependent variable:    
-    ##                     ---------------------------
-    ##                             log(crmrte)        
-    ## -----------------------------------------------
-    ## log(eff_cj)                  -0.350***         
-    ##                               (0.062)          
-    ##                                                
-    ## log(wtrd)                     0.598**          
-    ##                               (0.286)          
-    ##                                                
-    ## log(taxpc)                     0.160           
-    ##                               (0.143)          
-    ##                                                
-    ## mix                           -0.755*          
-    ##                               (0.433)          
-    ##                                                
-    ## density                      0.129***          
-    ##                               (0.031)          
-    ##                                                
-    ## pctymle                       2.810*           
-    ##                               (1.623)          
-    ##                                                
-    ## pctmin80                     0.012***          
-    ##                               (0.002)          
-    ##                                                
-    ## Constant                     -8.980***         
-    ##                               (1.664)          
-    ##                                                
-    ## -----------------------------------------------
-    ## Observations                    90             
-    ## R2                             0.685           
-    ## Adjusted R2                    0.658           
-    ## Residual Std. Error       0.321 (df = 82)      
-    ## F Statistic           25.443*** (df = 7; 82)   
-    ## ===============================================
-    ## Note:               *p<0.1; **p<0.05; ***p<0.01
-
-## Priscilla
-
-``` r
-av_wage <- log(rowMeans(data2[c('wcon', 'wtuc', 'wtrd', 'wfir', 'wser', 'wmfg', 'wfed', 'wsta', 'wloc')]))
-
-
-# model set 1
-
-m1 <- lm(log(crmrte) ~ prbarr + prbpris + prbconv + log(avgsen), data = data2) #with law enforcement vars
-m2 <- lm(log(crmrte) ~ prbarr + prbpris + prbconv + log(avgsen) + log(avgsen) + log(wtrd) , data = data2) #adding wage vars
-m3 <- lm(log(crmrte) ~ prbarr + prbpris + prbconv + log(avgsen) + log(wtrd)  + mix + log(density) + pctymle + pctmin80 + west + central + urban  + log(taxpc) , data = data2) #also controlling for offence mix, demographic and geographic data
-
-stargazer(m1, m2, m3, type="text", title = "Results with probabilities in level",
-          dep.var.labels=c("ln(Crimes committed per person)"),  out="models.txt") 
-```
-
-    ## 
-    ## Results with probabilities in level
-    ## =========================================================================================
-    ##                                              Dependent variable:                         
-    ##                     ---------------------------------------------------------------------
-    ##                                        ln(Crimes committed per person)                   
-    ##                              (1)                    (2)                     (3)          
-    ## -----------------------------------------------------------------------------------------
-    ## prbarr                    -2.061***              -1.934***               -1.384***       
-    ##                            (0.319)                (0.301)                 (0.285)        
-    ##                                                                                          
-    ## prbpris                     0.456                  0.140                  -0.377         
-    ##                            (0.544)                (0.518)                 (0.467)        
-    ##                                                                                          
-    ## prbconv                   -0.755***              -0.685***               -0.584***       
-    ##                            (0.123)                (0.117)                 (0.106)        
-    ##                                                                                          
-    ## log(avgsen)                 0.253                  0.154                   0.053         
-    ##                            (0.158)                (0.151)                 (0.130)        
-    ##                                                                                          
-    ## log(wtrd)                                         1.015***               0.726***        
-    ##                                                   (0.285)                 (0.272)        
-    ##                                                                                          
-    ## mix                                                                       -0.017         
-    ##                                                                           (0.539)        
-    ##                                                                                          
-    ## log(density)                                                              0.085**        
-    ##                                                                           (0.036)        
-    ##                                                                                          
-    ## pctymle                                                                   3.340**        
-    ##                                                                           (1.527)        
-    ##                                                                                          
-    ## pctmin80                                                                 0.009***        
-    ##                                                                           (0.003)        
-    ##                                                                                          
-    ## west                                                                      -0.064         
-    ##                                                                           (0.133)        
-    ##                                                                                          
-    ## central                                                                   -0.034         
-    ##                                                                           (0.089)        
-    ##                                                                                          
-    ## urban                                                                      0.207         
-    ##                                                                           (0.148)        
-    ##                                                                                          
-    ## log(taxpc)                                                                0.284**        
-    ##                                                                           (0.143)        
-    ##                                                                                          
-    ## Constant                  -3.269***              -8.414***               -8.174***       
-    ##                            (0.443)                (1.501)                 (1.612)        
-    ##                                                                                          
-    ## -----------------------------------------------------------------------------------------
-    ## Observations                  90                     90                     90           
-    ## R2                          0.467                  0.537                   0.735         
-    ## Adjusted R2                 0.442                  0.509                   0.690         
-    ## Residual Std. Error    0.410 (df = 85)        0.384 (df = 84)         0.306 (df = 76)    
-    ## F Statistic         18.593*** (df = 4; 85) 19.467*** (df = 5; 84) 16.233*** (df = 13; 76)
-    ## =========================================================================================
-    ## Note:                                                         *p<0.1; **p<0.05; ***p<0.01
-
-``` r
-#covariate.labels=c("'Probability' of arrest", "'Probability' of prison sentence",  "'Probability' of conviction", "ln(Avg. sentence, days)", "log(wkly wge, whlesle, retail trade)", "Offense mix: face-to-face/other",   "ln(People per sq. mile)",  "Percent young male", "Perc. minority, 1980", "=1 if in western N.C.", "=1 if in central N.C.",  "=1 if in SMSA",  "ln(Tax revenue per capita)"),
-
- plot(predict(m3),log(data2$crmrte),
-      xlab="predicted",ylab="actual", main = "Actual vs. Fitted - Probabilities in level")
- abline(a=0,b=1)
-```
-
-![](project_3_draft_files/figure-gfm/unnamed-chunk-38-1.png)<!-- -->
-
-``` r
- (plot(m3))
-```
-
-![](project_3_draft_files/figure-gfm/unnamed-chunk-38-2.png)<!-- -->![](project_3_draft_files/figure-gfm/unnamed-chunk-38-3.png)<!-- -->![](project_3_draft_files/figure-gfm/unnamed-chunk-38-4.png)<!-- -->![](project_3_draft_files/figure-gfm/unnamed-chunk-38-5.png)<!-- -->
-
-    ## NULL
-
-``` r
-# model set 2
-
-m1 <- lm(log(crmrte) ~ log(prbarr) + log(prbpris) + log(prbconv) + log(avgsen), data = data2) #with law enforcement vars
-m2 <- lm(log(crmrte) ~ log(prbarr) + log(prbpris) + log(prbconv) + log(avgsen)  + log(wtrd), data = data2) #adding wage vars
-m3 <- lm(log(crmrte) ~ log(prbarr) + log(prbpris) + log(prbconv) + log(avgsen) + log(wtrd) + log(density) + pctymle + pctmin80 + west + central + urban  + log(taxpc) , data = data2) #also controlling for offence mix, demographic and geographic data
-
-
-
-stargazer(m1, m2, m3, type="text", title = "Results with probabilities in log",
-          dep.var.labels=c("ln(Crimes committed per person)"),  out="models.txt") 
-```
-
-    ## 
-    ## Results with probabilities in log
-    ## =========================================================================================
-    ##                                              Dependent variable:                         
-    ##                     ---------------------------------------------------------------------
-    ##                                        ln(Crimes committed per person)                   
-    ##                              (1)                    (2)                     (3)          
-    ## -----------------------------------------------------------------------------------------
-    ## log(prbarr)               -0.724***              -0.678***               -0.507***       
-    ##                            (0.115)                (0.108)                 (0.103)        
-    ##                                                                                          
-    ## log(prbpris)                0.160                  0.024                  -0.269         
-    ##                            (0.206)                (0.196)                 (0.181)        
-    ##                                                                                          
-    ## log(prbconv)              -0.473***              -0.432***               -0.364***       
-    ##                            (0.083)                (0.078)                 (0.070)        
-    ##                                                                                          
-    ## log(avgsen)                 0.076                  -0.016                 -0.079         
-    ##                            (0.163)                (0.155)                 (0.133)        
-    ##                                                                                          
-    ## log(wtrd)                                         1.084***               0.783***        
-    ##                                                   (0.297)                 (0.285)        
-    ##                                                                                          
-    ## log(density)                                                             0.103***        
-    ##                                                                           (0.035)        
-    ##                                                                                          
-    ## pctymle                                                                    2.340         
-    ##                                                                           (1.660)        
-    ##                                                                                          
-    ## pctmin80                                                                 0.010***        
-    ##                                                                           (0.003)        
-    ##                                                                                          
-    ## west                                                                      -0.104         
-    ##                                                                           (0.138)        
-    ##                                                                                          
-    ## central                                                                   -0.055         
-    ##                                                                           (0.093)        
-    ##                                                                                          
-    ## urban                                                                      0.170         
-    ##                                                                           (0.156)        
-    ##                                                                                          
-    ## log(taxpc)                                                                 0.223         
-    ##                                                                           (0.152)        
-    ##                                                                                          
-    ## Constant                  -4.868***              -10.485***              -9.933***       
-    ##                            (0.432)                (1.588)                 (1.690)        
-    ##                                                                                          
-    ## -----------------------------------------------------------------------------------------
-    ## Observations                  90                     90                     90           
-    ## R2                          0.416                  0.496                   0.704         
-    ## Adjusted R2                 0.389                  0.466                   0.658         
-    ## Residual Std. Error    0.429 (df = 85)        0.401 (df = 84)         0.321 (df = 77)    
-    ## F Statistic         15.152*** (df = 4; 85) 16.559*** (df = 5; 84) 15.269*** (df = 12; 77)
-    ## =========================================================================================
-    ## Note:                                                         *p<0.1; **p<0.05; ***p<0.01
-
-``` r
-#covariate.labels=c("log('Probability' of arrest)", "log('Probability' of prison sentence)",  "log('Probability' of conviction)", "ln(Avg. sentence, days)", "log(wkly wge, whlesle, retail trade)", "Offense mix: face-to-face/other",   "ln(People per sq. mile)",  "Percent young male", "Perc. minority, 1980", "=1 if in western N.C.", "=1 if in central N.C.",  "=1 if in SMSA",  "ln(Tax revenue per capita)"),
-
- plot(predict(m3),log(data2$crmrte),
-      xlab="predicted",ylab="actual" , main = "Actual vs. Fitted - Probabilities in log")
- abline(a=0,b=1)
-```
-
-![](project_3_draft_files/figure-gfm/unnamed-chunk-38-6.png)<!-- -->
-
-``` r
-(plot(m3))
-```
-
-![](project_3_draft_files/figure-gfm/unnamed-chunk-38-7.png)<!-- -->![](project_3_draft_files/figure-gfm/unnamed-chunk-38-8.png)<!-- -->![](project_3_draft_files/figure-gfm/unnamed-chunk-38-9.png)<!-- -->![](project_3_draft_files/figure-gfm/unnamed-chunk-38-10.png)<!-- -->
-
-    ## NULL
-
-``` r
-# model set 3
-
-m1 <- lm(log(crmrte) ~ log(prbarr*prbpris*prbconv) + log(avgsen), data = data2) #with law enforcement vars
-m2 <- lm(log(crmrte) ~ log(prbarr*prbpris*prbconv) + log(avgsen) + log(wtrd), data = data2) #adding wage vars
-m3 <- lm(log(crmrte) ~ log(prbarr*prbpris*prbconv) + log(avgsen) + log(wtrd) + mix + log(density) + pctymle + pctmin80 + west + central + urban  + log(taxpc) , data = data2) #also controlling for offence mix, demographic and geographic data
-
-
-stargazer(m1, m2, m3, type="text", title = "Results with probabilities in log combined",
-          dep.var.labels=c("ln(Crimes committed per person)"), out="models.txt") 
-```
-
-    ## 
-    ## Results with probabilities in log combined
-    ## =====================================================================================================
-    ##                                                          Dependent variable:                         
-    ##                                 ---------------------------------------------------------------------
-    ##                                                    ln(Crimes committed per person)                   
-    ##                                          (1)                    (2)                     (3)          
-    ## -----------------------------------------------------------------------------------------------------
-    ## log(prbarr * prbpris * prbconv)       -0.469***              -0.443***               -0.383***       
-    ##                                        (0.074)                (0.068)                 (0.062)        
-    ##                                                                                                      
-    ## log(avgsen)                             0.013                  -0.076                 -0.107         
-    ##                                        (0.174)                (0.161)                 (0.132)        
-    ##                                                                                                      
-    ## log(wtrd)                                                     1.269***                0.743**        
-    ##                                                               (0.303)                 (0.285)        
-    ##                                                                                                      
-    ## mix                                                                                   -0.098         
-    ##                                                                                       (0.483)        
-    ##                                                                                                      
-    ## log(density)                                                                         0.120***        
-    ##                                                                                       (0.034)        
-    ##                                                                                                      
-    ## pctymle                                                                                2.514         
-    ##                                                                                       (1.670)        
-    ##                                                                                                      
-    ## pctmin80                                                                             0.009***        
-    ##                                                                                       (0.003)        
-    ##                                                                                                      
-    ## west                                                                                  -0.109         
-    ##                                                                                       (0.138)        
-    ##                                                                                                      
-    ## central                                                                               -0.045         
-    ##                                                                                       (0.093)        
-    ##                                                                                                      
-    ## urban                                                                                  0.188         
-    ##                                                                                       (0.158)        
-    ##                                                                                                      
-    ## log(taxpc)                                                                             0.218         
-    ##                                                                                       (0.153)        
-    ##                                                                                                      
-    ## Constant                              -4.966***              -11.464***              -9.595***       
-    ##                                        (0.443)                (1.604)                 (1.677)        
-    ##                                                                                                      
-    ## -----------------------------------------------------------------------------------------------------
-    ## Observations                              90                     90                     90           
-    ## R2                                      0.315                  0.431                   0.695         
-    ## Adjusted R2                             0.299                  0.411                   0.653         
-    ## Residual Std. Error                0.459 (df = 87)        0.421 (df = 86)         0.323 (df = 78)    
-    ## F Statistic                     20.015*** (df = 2; 87) 21.721*** (df = 3; 86) 16.194*** (df = 11; 78)
-    ## =====================================================================================================
-    ## Note:                                                                     *p<0.1; **p<0.05; ***p<0.01
-
-``` r
-#, covariate.labels=c("log(Probabilities combined)", "ln(Avg. sentence, days)", "log(wkly wge, whlesle, retail trade)", "Offense mix: face-to-face/other",   "ln(People per sq. mile)",  "Percent young male", "Perc. minority, 1980", "=1 if in western N.C.", "=1 if in central N.C.",  "=1 if in SMSA",  "ln(Tax revenue per capita)")
-
- plot(predict(m3),log(data2$crmrte),
-      xlab="predicted",ylab="actual", main = "Actual vs. Fitted - Probabilities in log combined")
- abline(a=0,b=1)
-```
-
-![](project_3_draft_files/figure-gfm/unnamed-chunk-38-11.png)<!-- -->
-
-``` r
- (plot(m3))
-```
-
-![](project_3_draft_files/figure-gfm/unnamed-chunk-38-12.png)<!-- -->![](project_3_draft_files/figure-gfm/unnamed-chunk-38-13.png)<!-- -->![](project_3_draft_files/figure-gfm/unnamed-chunk-38-14.png)<!-- -->![](project_3_draft_files/figure-gfm/unnamed-chunk-38-15.png)<!-- -->
-
-    ## NULL
+    ## ===================================================
+    ##                             Dependent variable:    
+    ##                         ---------------------------
+    ##                                 log(crmrte)        
+    ## ---------------------------------------------------
+    ## log(eff_cj)                      -0.424***         
+    ##                                   (0.052)          
+    ##                                                    
+    ## log(density * pctmin80)          0.195***          
+    ##                                   (0.021)          
+    ##                                                    
+    ## Constant                         -5.354***         
+    ##                                   (0.165)          
+    ##                                                    
+    ## ---------------------------------------------------
+    ## Observations                        90             
+    ## R2                                 0.662           
+    ## Adjusted R2                        0.654           
+    ## Residual Std. Error           0.323 (df = 87)      
+    ## F Statistic               85.029*** (df = 2; 87)   
+    ## ===================================================
+    ## Note:                   *p<0.1; **p<0.05; ***p<0.01
 
 # A Regression Table
 
