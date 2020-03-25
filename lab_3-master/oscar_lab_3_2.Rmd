@@ -299,9 +299,9 @@ plot(ymale_md)
 
 
 ```{r}
-geo_df = data2 %>% mutate(ln_crmrte = log(crmrte), ln_eff_cj = log(eff_cj), ln_wloc = log(wloc), ln_density = log(density), ln_taxpc = log(taxpc)) %>% 
+geo_df = data2 %>% mutate(ln_crmrte = log(crmrte), ln_eff_cj = log(eff_cj), ln_wloc = log(wloc), ln_wtrd = log(wtrd), ln_density = log(density), ln_taxpc = log(taxpc)) %>% 
   mutate(west_proper = ifelse(west == 1 & central != 1, 1, 0), central_proper = ifelse(west != 1 & central == 1, 1, 0)) %>% 
-  select(ln_crmrte, ln_eff_cj, ln_wloc, ln_density, ln_taxpc, pctmin80, urban, west, central, west_proper)
+  select(ln_crmrte, ln_eff_cj, ln_wloc, ln_wtrd, ln_density, ln_taxpc, pctmin80, urban, west, central, west_proper)
 
 cor(geo_df)
 ```
@@ -317,7 +317,7 @@ data2 = data2 %>% mutate(west_proper = ifelse(west == 1 & central != 1, 1, 0))
 
 Benchmark
 ```{r}
-density_min_md = lm(log(crmrte) ~ log(eff_cj) + log(wloc) + log(density) + pctmin80, data = data2)
+density_min_md = lm(log(crmrte) ~ log(eff_cj) + log(density) + pctmin80, data = data2)
 density_min_md$coefficients
 ```
 
@@ -327,7 +327,7 @@ plot(density_min_md)
 ```
 
 ```{r}
-wtrd_west_md = lm(log(crmrte) ~ log(eff_cj) + log(wtrd) + west_proper, data = data2)
+wtrd_west_md = lm(log(crmrte) ~ log(eff_cj) + log(density) + west_proper, data = data2)
 wtrd_west_md$coefficients
 ```
 
@@ -337,7 +337,7 @@ plot(wtrd_west_md)
 
 west
 ```{r}
-west_md = lm(log(crmrte) ~ log(eff_cj) + log(wloc) + log(density) + west_proper, data = data2)
+west_md = lm(log(crmrte) ~ log(eff_cj) + log(wtrd) + log(density) + west_proper, data = data2)
 west_md$coefficients
 ```
 
@@ -360,5 +360,67 @@ abline(a=0,b=1)
 stargazer(density_min_md, wtrd_west_md, type = "text")
 ```
 
+## Feature Engineering: Density
+
+
+```{r}
+hist(data2$density)
+```
+
+```{r}
+hist( data2$pctmin80)
+```
+
+
+```{r}
+hist(data2$crmrte)
+```
+
+```{r}
+hist(data2$polpc)
+```
+
+
+
+```{r}
+hist(data2$crmrte * data2$density)
+```
+
+
+```{r}
+hist(data2$density * data2$pctmin80)
+```
+
+```{r}
+hist(data2$density * data2$polpc)
+```
+
+```{r}
+crime_density_md = lm(log(crmrte * density) ~ log(eff_cj), data = data2)
+crime_density_md$coefficients
+```
+
+```{r}
+plot(crime_density_md)
+```
+
+```{r}
+crime_density_2_md = lm(log(crmrte) ~ log(eff_cj) + log(pctmin80 * density), data = data2)
+crime_density_2_md$coefficients
+```
+
+```{r}
+plot(crime_density_2_md)
+```
+
+```{r}
+plot(crime_density_2_md$fitted.values, log(data2$crmrte), main = "Actual vs Predicted")
+abline(a=0,b=1)
+```
+
+
+```{r}
+stargazer(density_min_md, wtrd_west_md, crime_density_2_md, type = "text")
+```
 
 
