@@ -96,11 +96,11 @@ convictions lead to sentencing.
 
   - `prbpris`: number of prison sentences for every conviction
 
-We can combine the three above variables into one variable (`eff_cj`)
-that is a measure of the efficiency of the criminal justice process in
-each county:
+We can combine the three above variables into one variable (`acj`) that
+is a measure of the efficiency of the criminal justice process in each
+county:
 
-eff\_cj \<- `prbarr` \* `prbconv` \* `prbpris`
+acj \<- `prbarr` \* `prbconv` \* `prbpris`
 
 *Severity of punishment*
 
@@ -204,6 +204,7 @@ library(stargazer) # visualize model fit
 library(skimr) # generate summary statistics
 library(car) # statistics 
 library(lmtest) # linear modeling
+library(olsrr) # evaluating OLS regression 
 ```
 
 #### Import Data
@@ -843,6 +844,16 @@ correlated to each other.
 This is a correlation matrix of all of our variables, using Spearman’s
 due to the fact that not all variables follow a normal distribution.
 
+Our original target variables for economic policy – those related to
+wages – appear to all be positively correlated with crime, which is
+opposite our original prediction. Rather than seeing that increased
+wages are related to reduced crime, we are seeing that higher wages is
+related to higher crime. This unexpected direction could be explained in
+part by the strong positive relationship between the wage variables and
+`density` and between `crmrte` and `density`. Thus, we will not include
+the wage variables in early models - if we include them, they will only
+be included along with covariates such as `density`.
+
 ``` r
 data_corr <- data2 %>% select(-county) 
 
@@ -944,54 +955,67 @@ to violations of the CLM.
 
 **Outliers:**
 
-## Alissa
+### Model 1
 
-**Model 1**
+Based on our exploration above, our dependent variable is *crime*,
+represented by the variable `crmrte`/
 
-DV:
-
-*Crime*
-
-log(`crmrte`)
-
-  - take the log because it makes intuitive sense – represents increase
-    in crime
-
-We originally used the following variables to predict crime:
+We used the following independent variables to predict crime:
 
 *Crime policy*
 
-1)  log(eff\_cj) \<- log(`prbarr` \* `prbconv` \* `prbpris`)
+1)  log(acj) \<- log(`prbarr` \* `prbconv` \* `prbpris`)
 
 2)  log(`avg_sen`)
 
-*Economic policy*
-
-Picked lower wages (based on boxplots)\* – would be more likely to
-affect w/ min wage policy econ policy –\>
-
-3)  log(`wtrd`)
-
-However, `eff_cf` was significant for the criminal justice policy
-variables, thus we removed `avg_sen`. Our economic policy
-variable,`wtrd`, was significantly related to crime but not in the
-expected direction - the higher the wages, the higher the crime. Since
-`wtrd` and `density` are positively correlated, we thought that perhaps
-wages in this sector would be higher in cities and this omitted variable
-could be influencing the direction of the relationship between `wtrd`
-and `crmrte`.
+<!-- end list -->
 
 ``` r
-data2 <- data2 %>% mutate(eff_cj = prbarr*prbconv*prbpris)
+# create new acj variable
+data2 <- data2 %>% mutate(acj = prbarr * prbconv * prbpris)
 ```
 
+However, `acj` and not `avg_sen` had a statistically significant
+relationship to crime rate, thus we removed `avg_sen`.
+
+### Data Transformations
+
+We decided to take the log of `acj` and `crmrte` to improve our model
+fit and interpretability. With these variables logged, they can be
+interpreted as relative increases in crime rate and assertiveness of the
+criminal justice system (rather than their value alone).
+
+``` r
+ggplot(data = data2, aes(x = crmrte, acj)) +
+  geom_point() +
+  theme_minimal() +
+  ggtitle("Relationship between Crime Rate and Assertiveness of Criminal Justice System") + 
+  xlab("Crime Rate") + ylab("Assertiveness of Criminal Justice System") +
+  geom_smooth(method='lm', formula= y~x)
+```
+
+![](project_3_draft_files/figure-gfm/unnamed-chunk-36-1.png)<!-- -->
+
+``` r
+ggplot(data = data2, aes(x = log(crmrte), y = log(acj))) +
+  geom_point() +
+  theme_minimal()  +
+  ggtitle("Relationship between Log Crime Rate and Log Assertiveness of Criminal Justice System") + 
+  xlab("Log Crime Rate") + ylab("Log Assertiveness of Criminal Justice System") +
+  geom_smooth(method='lm', formula= y~x)
+```
+
+![](project_3_draft_files/figure-gfm/unnamed-chunk-37-1.png)<!-- -->
+
+### Relationship between Crime Rate and Assertiveness of the Criminal Justice System
+
 Approximately 30% of the variation in crime rate can be explained by the
-efficiency of the criminal justice process. Increasing the ratio of
+assertiveness of the criminal justice process. Increasing the ratio of
 criminal justice practices to crime (increasing arrests, convictions,
 and sentencing) could help decrease the crime rate.
 
 ``` r
-mod1 <- lm(log(crmrte) ~ log(eff_cj), data = data2)
+mod1 <- lm(log(crmrte) ~ log(acj), data = data2)
 stargazer(mod1, type = "text")
 ```
 
@@ -1001,7 +1025,7 @@ stargazer(mod1, type = "text")
     ##                     ---------------------------
     ##                             log(crmrte)        
     ## -----------------------------------------------
-    ## log(eff_cj)                  -0.470***         
+    ## log(acj)                     -0.470***         
     ##                               (0.074)          
     ##                                                
     ## Constant                     -4.937***         
@@ -1016,7 +1040,115 @@ stargazer(mod1, type = "text")
     ## ===============================================
     ## Note:               *p<0.1; **p<0.05; ***p<0.01
 
-*need to check assumptions*
+### Assumptions
+
+#### Zero Conditional Mean
+
+We are close to meeting the zero conditional mean assumption, based on
+our plots below. Some residuals diverse at the extremes of our
+distribution, however for the most part they are similar.
+
+**Heteroskadiscity:**
+
+We can see from the plots below that we do not veer far from
+homoskedasticity – some points in our Normal Q-Q plot appear to diverge
+when they are at the extremes, but for the most part they are similar in
+their
+variance.
+
+``` r
+plot(mod1)
+```
+
+![](project_3_draft_files/figure-gfm/unnamed-chunk-39-1.png)<!-- -->![](project_3_draft_files/figure-gfm/unnamed-chunk-39-2.png)<!-- -->![](project_3_draft_files/figure-gfm/unnamed-chunk-39-3.png)<!-- -->![](project_3_draft_files/figure-gfm/unnamed-chunk-39-4.png)<!-- -->
+
+#### Normality of Errors
+
+``` r
+ggplot(data = data2, aes(x = mod1$fitted.values, y = log(data2$crmrte))) + 
+  geom_point() +
+  ggtitle("Model 1: Actual vs. Predicted Values") +
+  theme_minimal() +
+  xlab("Predicted Log Crime Rate") + ylab("Actual Log Crime Rate") +
+  geom_smooth(method='lm', formula= y~x)
+```
+
+![](project_3_draft_files/figure-gfm/unnamed-chunk-40-1.png)<!-- -->
+
+#### Outliers
+
+One can see that there is one potential outlier that also has a lot of
+leverage on our model (observation \#24).
+
+``` r
+ols_plot_resid_lev(mod1)
+```
+
+![](project_3_draft_files/figure-gfm/unnamed-chunk-41-1.png)<!-- -->
+
+The outlier with leverage was in county \#53.
+
+``` r
+data2 %>% filter(county == 53)
+```
+
+    ## # A tibble: 1 x 25
+    ##   county crmrte prbarr prbconv prbpris avgsen   polpc density taxpc  west
+    ##    <dbl>  <dbl>  <dbl>   <dbl>   <dbl>  <dbl>   <dbl>   <dbl> <dbl> <dbl>
+    ## 1     53 0.0141  0.303   0.140    0.25   12.0 0.00112   0.535  50.4     0
+    ## # … with 15 more variables: central <dbl>, urban <dbl>, pctmin80 <dbl>,
+    ## #   wcon <dbl>, wtuc <dbl>, wtrd <dbl>, wfir <dbl>, wser <dbl>,
+    ## #   wmfg <dbl>, wfed <dbl>, wsta <dbl>, wloc <dbl>, mix <dbl>,
+    ## #   pctymle <dbl>, acj <dbl>
+
+We can see that without this observation, we now explain slightly more
+of the variation (~38% compared to ~30%).
+
+``` r
+data2_out <- data2 %>% filter(county != 53)
+
+mod1_out <- lm(log(crmrte) ~ log(acj), data = data2_out)
+stargazer(mod1_out, type = "text")
+```
+
+    ## 
+    ## ===============================================
+    ##                         Dependent variable:    
+    ##                     ---------------------------
+    ##                             log(crmrte)        
+    ## -----------------------------------------------
+    ## log(acj)                     -0.534***         
+    ##                               (0.072)          
+    ##                                                
+    ## Constant                     -5.112***         
+    ##                               (0.217)          
+    ##                                                
+    ## -----------------------------------------------
+    ## Observations                    89             
+    ## R2                             0.389           
+    ## Adjusted R2                    0.382           
+    ## Residual Std. Error       0.430 (df = 87)      
+    ## F Statistic           55.410*** (df = 1; 87)   
+    ## ===============================================
+    ## Note:               *p<0.1; **p<0.05; ***p<0.01
+
+Although eliminating the outlier has improved our fit, it does not
+appear to have greatly affected how closely we meet our
+assumptions.
+
+``` r
+plot(mod1_out)
+```
+
+![](project_3_draft_files/figure-gfm/unnamed-chunk-44-1.png)<!-- -->![](project_3_draft_files/figure-gfm/unnamed-chunk-44-2.png)<!-- -->![](project_3_draft_files/figure-gfm/unnamed-chunk-44-3.png)<!-- -->![](project_3_draft_files/figure-gfm/unnamed-chunk-44-4.png)<!-- -->
+
+``` r
+ols_plot_resid_lev(mod1_out)
+```
+
+![](project_3_draft_files/figure-gfm/unnamed-chunk-45-1.png)<!-- -->
+
+### Model 2
 
 **Model 2** – omitted variable bias –\> add in these contextual
 variables
@@ -1053,7 +1185,7 @@ practice
 <!-- end list -->
 
 ``` r
-mod2 <- lm(log(crmrte) ~ log(eff_cj) + log(density *pctmin80) , data = data2)
+mod2 <- lm(log(crmrte) ~ log(acj) + log(density *pctmin80) , data = data2)
 stargazer(mod2, type = "text")
 ```
 
@@ -1063,7 +1195,7 @@ stargazer(mod2, type = "text")
     ##                         ---------------------------
     ##                                 log(crmrte)        
     ## ---------------------------------------------------
-    ## log(eff_cj)                      -0.424***         
+    ## log(acj)                         -0.424***         
     ##                                   (0.052)          
     ##                                                    
     ## log(density * pctmin80)          0.195***          
