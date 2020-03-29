@@ -213,10 +213,24 @@ stargazer(
 ```
 
 ```{r}
-mix_md1 = lm(log(crmrte) ~ log(acj) + log(density * pctmin80) + log(taxpc), data = data2)
+mix_md1 = lm(log(crmrte) ~ log(acj) + log(density * pctmin80) + log(mix), data = data2)
 plot(mix_md1)
 ```
 
+```{r}
+se_mix1 = sqrt(diag(vcovHC(mix_md1)))
+```
+
+
+```{r}
+stargazer(
+  demo_md2
+  , mix_md1
+  , type = "text"
+  , se = list(s2_demo2, se_mix1)
+  , star.cutoffs = c(0.05, 0.01, 0.001)
+)
+```
 
 
 
