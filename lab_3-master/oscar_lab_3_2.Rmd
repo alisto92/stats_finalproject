@@ -337,7 +337,7 @@ plot(wtrd_west_md)
 
 west
 ```{r}
-west_md = lm(log(crmrte) ~ log(eff_cj) + log(wtrd) + log(density) + west_proper, data = data2)
+west_md = lm(log(crmrte) ~ log(acj) + log(wtrd) + log(density) + west_proper, data = data2)
 west_md$coefficients
 ```
 

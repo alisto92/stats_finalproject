@@ -10,6 +10,7 @@ filter <- dplyr::filter
 library(car)
 library(lmtest)
 library(stargazer)
+library(sandwich)
 
 crime_df = data2
 ```
@@ -173,6 +174,22 @@ ggplot(crime_df, aes(x=prbconv, y=crmrte)) +
   geom_point()+
   geom_smooth(method=lm, se=FALSE)
 ```
+
+
+```{r}
+ggplot(crime_df, aes(x=log(prbconv), y=crmrte)) + 
+  geom_point()+
+  geom_smooth(method=lm, se=FALSE)
+```
+
+
+```{r}
+ggplot(crime_df, aes(x=log(prbconv), y=log(crmrte))) + 
+  geom_point()+
+  geom_smooth(method=lm, se=FALSE)
+```
+
+
 
 Negative realtionship although there is some positive data skewness.
 
@@ -346,3 +363,8 @@ plot(justice_police_md)
 **Outliers:** There is one observation with high leverage but not high influence.
 
 Next Steps: Heteroskadiscity could be a sign of omitted variables.
+
+```{r}
+m2 <- lm(log(crmrte) ~ log(eff_cj), data = data2);
+```
+

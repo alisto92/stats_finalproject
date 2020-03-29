@@ -1,0 +1,225 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r, message=FALSE}
+library(corrplot) # for correlation matix
+library(stargazer) # visualize model fit
+library(skimr) # generate summary statistics
+library(car) # statistics 
+library(lmtest) # linear modeling
+library(sandwich)
+library(tidyverse) # for data import, manipulation, viz
+filter <- dplyr::filter
+```
+
+```{r}
+lm(log(crmrte) ~ log(eff_cj) + log(avgsen) + log(density) + mix  + pctymle + pctmin80 + west + central + urban  + log(taxpc) , data = data2)
+```
+
+```{r}
+data2$acj = data2$prbarr * data2$prbconv * data2$prbpris
+data2$west_proper = ifelse(data2$west == 1 & data2$central != 1, 1, 0) 
+```
+
+
+```{r}
+df = data2 %>% 
+  mutate(
+    acj = prbarr * prbconv * prbpris
+    , west_proper = ifelse(west == 1 & central != 1, 1, 0)
+    , central_proper = ifelse(west != 1 & central == 1, 1, 0)
+    , num_minorities = density * pctmin80
+    , num_ymales = density * pctymle
+  ) %>% 
+  mutate(
+    ln_crmrte = log(crmrte)
+    , ln_acj = log(prbarr * prbconv * polpc)
+    , ln_wloc = log(wloc)
+    , ln_wtrd = log(wtrd)
+    , ln_density = log(density)
+    , ln_taxpc = log(taxpc)
+    , ln_pctymle = log(pctymle)
+    ) %>% 
+  mutate(
+    acj = prbarr * prbconv * polpc
+    , west_proper = ifelse(west == 1 & central != 1, 1, 0)
+    , central_proper = ifelse(west != 1 & central == 1, 1, 0)
+  ) %>% 
+  select(
+    ln_crmrte
+    , ln_acj
+    , ln_wloc
+    , ln_wtrd
+    , ln_taxpc
+    , ln_density
+    , pctmin80
+    , ln_pctymle
+    , num_minorities
+    , num_ymales
+    , urban
+    , west_proper
+  )
+cor(df)
+```
+
+Base model
+```{r}
+base_md = lm(log(crmrte) ~ log(acj), data = data2)
+plot(base_md)
+```
+
+H0: demographic factors do not have an impact on the model fit
+```{r}
+md1 = lm(log(crmrte) ~ log(acj) + log(density) + log(pctymle) + pctmin80, data = data2)
+plot(md1)
+```
+
+```{r}
+coeftest(md1)
+```
+
+```{r}
+coeftest(md1, vcov = vcovHC)
+```
+
+Density and minority percetange are significant on explaing the variation on crime rate. Bot variables have a positive relationship with crime rate. % of young males does not explain the variation of crime rate.
+
+```{r}
+ggplot(data2, aes(x= pctymle*density , y=log(crmrte + 1))) + 
+  geom_point()+
+  geom_smooth(method=lm, se=FALSE)
+```
+
+```{r}
+interac_md2 = lm(log(crmrte) ~ log(acj) + pctymle*density + pctmin80, data = data2)
+plot(interac_md2)
+```
+
+```{r}
+coeftest(interac_md2, vcov= vcovHC)
+```
+
+```{r}
+md3 = lm(log(crmrte) ~ log(acj) +  log(density*pctmin80) + log(pctymle), data = data2)
+plot(md3)
+```
+```{r}
+coeftest(md3, vcov.= vcovHC)
+```
+
+```{r}
+interact_md4 =  lm(log(crmrte) ~ log(acj) +  density*pctmin80 + log(pctymle), data = data2)
+plot(interact_md4)
+```
+
+```{r}
+se = sqrt(diag(vcovHC(base_md)))
+se1 = sqrt(diag(vcovHC(md1)))
+se2 = sqrt(diag(vcovHC(interac_md2)))
+se3 = sqrt(diag(vcovHC(md3)))
+se4 = sqrt(diag(vcovHC(interact_md4)))
+```
+
+```{r}
+# se
+se1
+```
+
+```{r}
+stargazer(
+  base_md
+  , md1
+  , interac_md2
+  , md3
+  , interact_md4
+  , type = "text"
+  , se = list(se, se1, se2, se3, se4)
+  , star.cutoffs = c(0.05, 0.01, 0.001)
+)
+```
+
+```{r}
+demo_md1 = lm(log(crmrte) ~ log(acj) + pctmin80, data = data2)
+plot(demo_md1)
+```
+
+```{r}
+demo_md2 = lm(log(crmrte) ~ log(acj) + log(density * pctmin80), data = data2)
+plot(demo_md2)
+```
+
+```{r}
+s2_demo1 = sqrt(diag(vcovHC(demo_md1)))
+s2_demo2 = sqrt(diag(vcovHC(demo_md2)))
+```
+
+```{r}
+stargazer(
+  base_md
+  , demo_md1
+  , demo_md2
+  , type = "text"
+  , se = list(se, s2_demo1, s2_demo2)
+  , star.cutoffs = c(0.05, 0.01, 0.001)
+)
+```
+
+```{r}
+geo_md1 = lm(log(crmrte) ~ log(acj) + log(density * pctmin80) + west_proper, data = data2)
+plot(geo_md1)
+```
+
+```{r}
+geo_md2 = lm(log(crmrte) ~ log(acj) + log(density * pctmin80) + west_proper + urban, data = data2)
+plot(geo_md2)
+```
+
+```{r}
+se_geo1 = sqrt(diag(vcovHC(geo_md1)))
+se_geo2 = sqrt(diag(vcovHC(geo_md2)))
+```
+
+```{r}
+stargazer(
+  demo_md2
+  , geo_md1
+  , geo_md2
+  , type = "text"
+  , se = list(s2_demo2, se_geo1, se_geo2)
+  , star.cutoffs = c(0.05, 0.01, 0.001)
+)
+```
+
+
+```{r}
+eco_md1 = lm(log(crmrte) ~ log(acj) + log(density * pctmin80) + log(taxpc), data = data2)
+plot(eco_md1)
+```
+
+```{r}
+se_eco1 = sqrt(diag(vcovHC(eco_md1)))
+```
+
+```{r}
+stargazer(
+  demo_md2
+  , eco_md1
+  , type = "text"
+  , se = list(s2_demo2, se_eco1)
+  , star.cutoffs = c(0.05, 0.01, 0.001)
+)
+```
+
+```{r}
+mix_md1 = lm(log(crmrte) ~ log(acj) + log(density * pctmin80) + log(taxpc), data = data2)
+plot(mix_md1)
+```
+
+
+
+
+
+
+
