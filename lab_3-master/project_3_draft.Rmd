@@ -61,9 +61,9 @@ If we find that the efficiency of sentencing is associated with crime rate (with
 
 - `prbpris`: number of prison sentences for every conviction
 
-We can combine the three above variables into one variable (`eff_cj`) that is a measure of the efficiency of the criminal justice process in each county: 
+We can combine the three above variables into one variable (`acj`) that is a measure of the efficiency of the criminal justice process in each county: 
 
-eff_cj <- `prbarr` * `prbconv` * `prbpris` 
+acj <- `prbarr` * `prbconv` * `prbpris` 
 
 *Severity of punishment* 
 
@@ -140,6 +140,7 @@ library(stargazer) # visualize model fit
 library(skimr) # generate summary statistics
 library(car) # statistics 
 library(lmtest) # linear modeling
+library(olsrr) # evaluating OLS regression 
 ```
 
 #### Import Data
@@ -490,6 +491,8 @@ One would expect variables within each of the above groups to be correlated to e
 
 This is a correlation matrix of all of our variables, using Spearman's due to the fact that not all variables follow a normal distribution. 
 
+Our original target variables for economic policy -- those related to wages -- appear to all be positively correlated with crime, which is opposite our original prediction. Rather than seeing that increased wages are related to reduced crime, we are seeing that higher wages is related to higher crime. This unexpected direction could be explained in part by the strong positive relationship between the wage variables and `density` and between `crmrte` and `density`. Thus, we will not include the wage variables in early models - if we include them, they will only be included along with covariates such as `density`. 
+
 ```{r}
 data_corr <- data2 %>% select(-county) 
 
@@ -547,48 +550,117 @@ Note that you may need to change your model specifications in response to violat
 
 **Outliers:**
 
-## Alissa
+### Model 1
 
-**Model 1** 
+Based on our exploration above, our dependent variable is *crime*, represented by the variable `crmrte`/
 
-DV: 
-
-*Crime*
-
-log(`crmrte`)
-
-* take the log because it makes intuitive sense -- represents increase in crime 
-
-We originally used the following variables to predict crime: 
+We used the following independent variables to predict crime: 
 
 *Crime policy* 
 
-(1) log(eff_cj) <- log(`prbarr` * `prbconv` * `prbpris`)
+(1) log(acj) <- log(`prbarr` * `prbconv` * `prbpris`)
 
 (2) log(`avg_sen`)
 
-*Economic policy* 
-
-Picked lower wages (based on boxplots)* -- would be more likely to affect w/ min wage policy 
-econ policy --> 
-
-(3) log(`wtrd`)
-
-However, `eff_cf` was significant for the criminal justice policy variables, thus we removed `avg_sen`. Our economic policy variable,`wtrd`, was significantly related to crime but not in the expected direction - the higher the wages, the higher the crime. Since `wtrd` and `density` are positively correlated, we thought that perhaps wages in this sector would be higher in cities and this omitted variable could be influencing the direction of the relationship between `wtrd` and `crmrte`.  
-
 ```{r}
-data2 <- data2 %>% mutate(eff_cj = prbarr*prbconv*prbpris)
+# create new acj variable
+data2 <- data2 %>% mutate(acj = prbarr * prbconv * prbpris)
 ```
 
-Approximately 30% of the variation in crime rate can be explained by the efficiency of the criminal justice process. Increasing the ratio of criminal justice practices to crime (increasing arrests, convictions, and sentencing) could help decrease the crime rate. 
+However, `acj` and not `avg_sen` had a statistically significant relationship to crime rate, thus we removed `avg_sen`. 
+
+### Data Transformations
+
+We decided to take the log of `acj` and `crmrte` to improve our model fit and interpretability. With these variables logged, they can be interpreted as relative increases in crime rate and assertiveness of the criminal justice system (rather than their value alone). 
 
 ```{r}
-mod1 <- lm(log(crmrte) ~ log(eff_cj), data = data2)
+ggplot(data = data2, aes(x = crmrte, acj)) +
+  geom_point() +
+  theme_minimal() +
+  ggtitle("Relationship between Crime Rate and Assertiveness of Criminal Justice System") + 
+  xlab("Crime Rate") + ylab("Assertiveness of Criminal Justice System") +
+  geom_smooth(method='lm', formula= y~x)
+```
+
+```{r}
+ggplot(data = data2, aes(x = log(crmrte), y = log(acj))) +
+  geom_point() +
+  theme_minimal()  +
+  ggtitle("Relationship between Log Crime Rate and Log Assertiveness of Criminal Justice System") + 
+  xlab("Log Crime Rate") + ylab("Log Assertiveness of Criminal Justice System") +
+  geom_smooth(method='lm', formula= y~x)
+``` 
+
+### Relationship between Crime Rate and Assertiveness of the Criminal Justice System
+
+Approximately 30% of the variation in crime rate can be explained by the assertiveness of the criminal justice process. Increasing the ratio of criminal justice practices to crime (increasing arrests, convictions, and sentencing) could help decrease the crime rate. 
+
+```{r, warning=F, error=F}
+mod1 <- lm(log(crmrte) ~ log(acj), data = data2)
 stargazer(mod1, type = "text")
 ```
 
+### Assumptions 
 
-*need to check assumptions* 
+#### Zero Conditional Mean
+
+We are close to meeting the zero conditional mean assumption, based on our plots below. Some residuals diverse at the extremes of our distribution, however for the most part they are similar. 
+
+**Heteroskadiscity:**
+
+We can see from the plots below that we do not veer far from homoskedasticity -- some points in our Normal Q-Q plot appear to diverge when they are at the extremes, but for the most part they are similar in their variance.
+
+```{r}
+plot(mod1)
+```
+
+#### Normality of Errors
+
+```{r}
+ggplot(data = data2, aes(x = mod1$fitted.values, y = log(data2$crmrte))) + 
+  geom_point() +
+  ggtitle("Model 1: Actual vs. Predicted Values") +
+  theme_minimal() +
+  xlab("Predicted Log Crime Rate") + ylab("Actual Log Crime Rate") +
+  geom_smooth(method='lm', formula= y~x)
+```
+
+
+
+#### Outliers
+
+One can see that there is one potential outlier that also has a lot of leverage on our model (observation #24). 
+
+```{r}
+ols_plot_resid_lev(mod1)
+```
+
+The outlier with leverage was in county #53. 
+
+```{r}
+data2 %>% filter(county == 53)
+```
+
+We can see that without this observation, we now explain slightly more of the variation (~38% compared to ~30%). 
+
+```{r, warning = F, error = F}
+data2_out <- data2 %>% filter(county != 53)
+
+mod1_out <- lm(log(crmrte) ~ log(acj), data = data2_out)
+stargazer(mod1_out, type = "text")
+```
+
+Although eliminating the outlier has improved our fit, it does not appear to have greatly affected how closely we meet our assumptions. 
+
+```{r}
+plot(mod1_out)
+```
+
+```{r}
+ols_plot_resid_lev(mod1_out)
+```
+
+### Model 2 
 
 **Model 2**  -- omitted variable bias --> add in these contextual variables 
 
@@ -612,7 +684,7 @@ In our first model, we only explained 30% of the variation in crime. Additionall
   
 
 ```{r}
-mod2 <- lm(log(crmrte) ~ log(eff_cj) + log(density *pctmin80) , data = data2)
+mod2 <- lm(log(crmrte) ~ log(acj) + log(density *pctmin80) , data = data2)
 stargazer(mod2, type = "text")
 ```
 
