@@ -15,10 +15,6 @@ filter <- dplyr::filter
 ```
 
 ```{r}
-lm(log(crmrte) ~ log(eff_cj) + log(avgsen) + log(density) + mix  + pctymle + pctmin80 + west + central + urban  + log(taxpc) , data = data2)
-```
-
-```{r}
 data2$acj = data2$prbarr * data2$prbconv * data2$prbpris
 data2$west_proper = ifelse(data2$west == 1 & data2$central != 1, 1, 0) 
 ```
@@ -93,7 +89,7 @@ ggplot(data2, aes(x= pctymle*density , y=log(crmrte + 1))) +
 ```
 
 ```{r}
-interac_md2 = lm(log(crmrte) ~ log(acj) + pctymle*density + pctmin80, data = data2)
+interac_md2 = lm(log(crmrte) ~ log(acj) + log(pctymle)*log(density) + pctmin80, data = data2)
 plot(interac_md2)
 ```
 
@@ -115,16 +111,18 @@ plot(interact_md4)
 ```
 
 ```{r}
+interac_md5 = lm(log(crmrte) ~ log(acj) + pctymle*density + pctmin80, data = data2)
+plot(interac_md5)
+```
+
+
+```{r}
 se = sqrt(diag(vcovHC(base_md)))
 se1 = sqrt(diag(vcovHC(md1)))
 se2 = sqrt(diag(vcovHC(interac_md2)))
 se3 = sqrt(diag(vcovHC(md3)))
 se4 = sqrt(diag(vcovHC(interact_md4)))
-```
-
-```{r}
-# se
-se1
+se5 = sqrt(diag(vcovHC(interac_md5)))
 ```
 
 ```{r}
@@ -134,8 +132,9 @@ stargazer(
   , interac_md2
   , md3
   , interact_md4
+  , interac_md5
   , type = "text"
-  , se = list(se, se1, se2, se3, se4)
+  , se = list(se, se1, se2, se3, se4, se5)
   , star.cutoffs = c(0.05, 0.01, 0.001)
 )
 ```
@@ -177,8 +176,14 @@ plot(geo_md2)
 ```
 
 ```{r}
+geo_md3 = lm(log(crmrte) ~ log(acj) + log(density * pctmin80) + urban, data = data2)
+plot(geo_md3)
+```
+
+```{r}
 se_geo1 = sqrt(diag(vcovHC(geo_md1)))
 se_geo2 = sqrt(diag(vcovHC(geo_md2)))
+se_geo3 = sqrt(diag(vcovHC(geo_md3)))
 ```
 
 ```{r}
@@ -186,28 +191,9 @@ stargazer(
   demo_md2
   , geo_md1
   , geo_md2
+  , geo_md3
   , type = "text"
   , se = list(s2_demo2, se_geo1, se_geo2)
-  , star.cutoffs = c(0.05, 0.01, 0.001)
-)
-```
-
-
-```{r}
-eco_md1 = lm(log(crmrte) ~ log(acj) + log(density * pctmin80) + log(taxpc), data = data2)
-plot(eco_md1)
-```
-
-```{r}
-se_eco1 = sqrt(diag(vcovHC(eco_md1)))
-```
-
-```{r}
-stargazer(
-  demo_md2
-  , eco_md1
-  , type = "text"
-  , se = list(s2_demo2, se_eco1)
   , star.cutoffs = c(0.05, 0.01, 0.001)
 )
 ```
@@ -232,8 +218,123 @@ stargazer(
 )
 ```
 
+```{r}
+eco_md1 = lm(log(crmrte) ~ log(acj) + log(density * pctmin80) + log(taxpc), data = data2)
+plot(eco_md1)
+```
+
+```{r}
+eco_md2 = lm(log(crmrte) ~ log(acj) + log(density * pctmin80) + log(wloc), data = data2)
+plot(eco_md2 )
+```
+
+```{r}
+eco_md3 = lm(log(crmrte) ~ log(acj) + log(density * pctmin80) + log(wloc) + log(taxpc), data = data2)
+plot(eco_md3)
+```
+
+```{r}
+eco_md4 = lm(log(crmrte) ~ log(acj) + log(density * pctmin80) + log(wloc)*log(taxpc), data = data2)
+plot(eco_md4)
+```
+
+```{r}
+eco_md5 = lm(log(crmrte) ~ log(acj) + log(density * pctmin80) + taxpc + taxpc^2, data = data2)
+plot(eco_md5)
+```
+
+```{r}
+eco_md6 = lm(log(crmrte) ~ log(acj) + log(density * pctmin80) + wloc + wloc^2, data = data2)
+plot(eco_md6)
+```
+
+```{r}
+eco_md7 = lm(log(crmrte) ~ log(acj) + log(density * pctmin80) + log(wloc)*log(wloc), data = data2)
+plot(eco_md7)
+```
 
 
+```{r}
+se_eco1 = sqrt(diag(vcovHC(eco_md1)))
+se_eco2 = sqrt(diag(vcovHC(eco_md2)))
+se_eco3 = sqrt(diag(vcovHC(eco_md3)))
+se_eco4 = sqrt(diag(vcovHC(eco_md4)))
+se_eco5 = sqrt(diag(vcovHC(eco_md5)))
+se_eco6 = sqrt(diag(vcovHC(eco_md6)))
+se_eco7 = sqrt(diag(vcovHC(eco_md7)))
+```
+
+```{r}
+stargazer(
+   eco_md1
+  , eco_md2
+  , eco_md3
+  , eco_md4
+  , eco_md5
+  , type = "text"
+  , se = list(s2_demo2, se_eco1, se_eco2, se_eco3, se_eco4, se_eco5)
+  , star.cutoffs = c(0.05, 0.01, 0.001)
+)
+```
 
 
+```{r}
+stargazer(
+  eco_md6
+  , eco_md7
+  , type = "text"
+  , se = list(s2_demo2, se_eco5, se_eco6)
+  , star.cutoffs = c(0.05, 0.01, 0.001)
+)
+```
+
+
+```{r}
+m4 <- lm(log(crmrte) ~ log(acj) + log(avgsen) + log(density) + mix  + pctymle + pctmin80 + west + central + urban  + log(taxpc) , data = data2) 
+```
+
+```{r}
+combined_md1 = lm(log(crmrte) ~ log(acj) + log(density * pctmin80) + log(taxpc) + urban, data = data2)
+plot(combined_md1)
+```
+
+```{r}
+combined_md1 = lm(log(crmrte) ~ log(acj) + log(density * pctmin80) + log(taxpc) + urban, data = data2)
+plot(combined_md1)
+```
+
+```{r}
+combined_md2 = lm(log(crmrte) ~ log(acj) + log(density * pctmin80) + taxpc*taxpc + urban, data = data2)
+plot(combined_md2)
+```
+
+```{r}
+combined_md3 = lm(log(crmrte) ~ log(acj) + log(density * pctmin80) + taxpc*taxpc + wloc*wloc + urban, data = data2)
+plot(combined_md3)
+```
+
+```{r}
+se_m4 = sqrt(diag(vcovHC(m4)))
+se_combined_md1 = sqrt(diag(vcovHC(combined_md1)))
+se_combined_md2 = sqrt(diag(vcovHC(combined_md2)))
+se_combined_md3 = sqrt(diag(vcovHC(combined_md3)))
+```
+
+```{r}
+stargazer(
+  demo_md2
+  , m4
+  , combined_md1
+  , combined_md2
+  , combined_md3
+  , type = "text"
+  , se = list(s2_demo2, se_m4, se_combined_md1)
+  , star.cutoffs = c(0.05, 0.01, 0.001)
+)
+```
+
+```{r}
+plot(log(data2$crmrte), combined_md1$fitted.values, main = "Crime Rate - Actual vs Predicted")
+abline(a=0,b=1)
+```
 
