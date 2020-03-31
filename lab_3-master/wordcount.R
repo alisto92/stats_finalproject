@@ -1,0 +1,30 @@
+# install package
+remotes::install_github("benmarwick/wordcountaddin")
+# load 
+library(wordcountaddin)
+
+# This function reads a Rmd file and returns the word count 
+# It uses the wordcountaddin and koRpus packages
+text_stats_file <- function(rmdFile) {
+  rmd <- file(rmdFile, "rt")
+  text <- readLines(rmd)
+  conText <- ""
+  for (i in text) {
+    conText <- paste(conText, i)
+  }
+  close(rmd)
+  # count words - uses an internal function of the wordcountaddin package
+  return(wordcountaddin:::text_stats_fn_(conText))
+}
+
+# This function renders a Rmd file and prints the word count
+render_and_count <- function(rmdFile) {
+  rmarkdown::render(rmdFile)
+  n_words <- text_stats_file(rmdFile)$n_words_korp
+  cat("\n\nword count: ", n_words, "\n\n")
+}
+
+
+text_stats_file("~/project_3/w203_project3/lab_3-master/project_3_draft.Rmd")
+
+wordcountaddin::word_count("~/project_3/w203_project3/lab_3-master/project_3_draft.Rmd")
