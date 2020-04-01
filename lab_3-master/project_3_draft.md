@@ -1027,6 +1027,83 @@ ggplot(data_geo_long, aes(value)) +
   - `central`: =1 if in central N.C.
   - `urban`: =1 if in SMSA
 
+Are these mutually exclusive categories? It appears that most counties
+have only one categorization. However, 7 counties have 2 and 33 have 0.
+
+``` r
+geo <- data2 %>% rowwise() %>% mutate(geo_sum = west + central + urban) 
+
+table(geo$geo_sum, useNA = "always")
+```
+
+    ## 
+    ##    0    1    2 <NA> 
+    ##   33   50    7    0
+
+Most of these are central, urban counties. This makes sense because most
+urban centers in North Carolina are in its center or on its coast
+(towards the east). Only one is western and urban (County \#21).
+According to the FIPS codes, this would be Buncombe County - which is in
+the west and contains the city of Asheville. This seems accurate.
+
+What about the one county that is listed as both western and central
+(County \#71)? According to the FIPS codes, this is Gaston County. Based
+on Google search, this county looks like it could be either western or
+central North Carolina (it’s on the edge). Perhaps this categorization
+is accurate. Nothing in the data dictionary tells us that these are
+mutually exclusive, therefore to limit our assumptions we will live this
+row as is for now while monitoring its influence on our modeling.
+
+``` r
+geo %>% filter(geo_sum == 2) %>% select(county, west, central, urban)
+```
+
+    ## Source: local data frame [7 x 4]
+    ## Groups: <by row>
+    ## 
+    ## # A tibble: 7 x 4
+    ##   county  west central urban
+    ##    <dbl> <dbl>   <dbl> <dbl>
+    ## 1     21     1       0     1
+    ## 2     63     0       1     1
+    ## 3     67     0       1     1
+    ## 4     71     1       1     0
+    ## 5     81     0       1     1
+    ## 6    119     0       1     1
+    ## 7    183     0       1     1
+
+Using the FIPS codes and Google search, it appears that the counties
+that have all 0’s for `west`, `central` and `urban` are in Eastern North
+Carolina. Thus, these appear to be valid rows.
+
+``` r
+geo %>% filter(geo_sum == 0) %>% select(county, west, central, urban)
+```
+
+    ## Source: local data frame [33 x 4]
+    ## Groups: <by row>
+    ## 
+    ## # A tibble: 33 x 4
+    ##    county  west central urban
+    ##     <dbl> <dbl>   <dbl> <dbl>
+    ##  1     13     0       0     0
+    ##  2     15     0       0     0
+    ##  3     17     0       0     0
+    ##  4     19     0       0     0
+    ##  5     41     0       0     0
+    ##  6     47     0       0     0
+    ##  7     49     0       0     0
+    ##  8     53     0       0     0
+    ##  9     55     0       0     0
+    ## 10     61     0       0     0
+    ## # … with 23 more rows
+
+We will prioritize `west` in our model, as Western North Carolina seems
+qualitatively different than other regions based on our research. There
+are less universities and different populations (e.g., many less
+minorities). The other categories may be important, but are likely less
+influential on crime patterns.
+
 ### Relationships between Variables
 
 One would expect variables within each of the above groups to be
@@ -1056,7 +1133,7 @@ matrix_corr <- round(cor(data_corr, method = "spearman"), 1)
 corrplot(matrix_corr, type = "lower", method = "ellipse", order = "alphabet")
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-31-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-34-1.png)<!-- -->
 
 ## Results
 
@@ -1116,7 +1193,7 @@ ggplot(data = data2, aes(x = log(crmrte), y = log(prbarr) + log(prbconv))) +
   geom_smooth(method='lm', formula= y~x)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-32-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-35-1.png)<!-- -->
 
 Approximately 40% of the variation in crime rate can be explained by the
 assertiveness of the criminal justice process. Increasing the ratio of
@@ -1171,7 +1248,7 @@ leverage on our model (observation \#24).
 ols_plot_resid_lev(mod1)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-34-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-37-1.png)<!-- -->
 
 The outlier with leverage was in county \#11.
 
@@ -1231,7 +1308,7 @@ analysis thus we cannot claim that it has a data quality issue.
 ols_plot_resid_lev(mod1_out)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-37-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-40-1.png)<!-- -->
 
 ### Model 2
 
@@ -1273,7 +1350,7 @@ ggplot(data = data2, aes(x = wtrd, crmrte)) +
   geom_smooth(method='lm', formula= y~x)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-38-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-41-1.png)<!-- -->
 
 The fit appears slightly improved after logging these wages.
 
@@ -1286,7 +1363,7 @@ ggplot(data = data2, aes(x = log(wtrd), crmrte)) +
   geom_smooth(method='lm', formula= y~x)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-39-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-42-1.png)<!-- -->
 
 We can see that we have a relatively clear linear relationship between
 federal wages and crime.
@@ -1300,7 +1377,7 @@ ggplot(data = data2, aes(x = wfed, crmrte)) +
   geom_smooth(method='lm', formula= y~x)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-40-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-43-1.png)<!-- -->
 
 The fit appears slightly improved after logging these wages - especially
 in terms of variability. One can see that the spread appears more even
@@ -1315,7 +1392,7 @@ ggplot(data = data2, aes(x = log(wfed), crmrte)) +
   geom_smooth(method='lm', formula= y~x)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-41-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-44-1.png)<!-- -->
 
 We can see that we do not have a very linear relationship between tax
 per capita and crime. Many of the points cluster together, leaving
@@ -1330,7 +1407,7 @@ ggplot(data = data2, aes(x = taxpc, crmrte)) +
   geom_smooth(method='lm', formula= y~x)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-42-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-45-1.png)<!-- -->
 
 The fit appears slightly improved after logging tax per capital.
 
@@ -1343,7 +1420,7 @@ ggplot(data = data2, aes(x = log(taxpc), crmrte)) +
   geom_smooth(method='lm', formula= y~x)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-43-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-46-1.png)<!-- -->
 
 #### Discussion on results
 
@@ -1414,7 +1491,7 @@ leverage on our model (observation \#24).
 ols_plot_resid_lev(mod2a)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-45-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-48-1.png)<!-- -->
 
 Once again, county \#11 appears to be an outlier with leverage.
 
@@ -1483,7 +1560,7 @@ quality issues.
 ols_plot_resid_lev(mod2_out)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-48-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-51-1.png)<!-- -->
 
 In checking our OLS assumptions for model 2, we noted that we violated
 the homoskedasticity assumption. The variability of our residuals
@@ -1493,7 +1570,7 @@ decrease as the value of our target variable (crime) increases.
 plot(mod2a, which = 3)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-49-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-52-1.png)<!-- -->
 
 We can see that log(`taxpc`), `density`, and `pctymle` are no longer
 significant. Thus, we will only make conclusions regarding our crime
@@ -1596,7 +1673,7 @@ ggplot(data = data2, aes(x = density, crmrte)) +
   geom_smooth(method='lm', formula= y~x)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-51-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-54-1.png)<!-- -->
 
 ``` r
 ggplot(data = data2, aes(x = log(density), crmrte)) +
@@ -1607,7 +1684,7 @@ ggplot(data = data2, aes(x = log(density), crmrte)) +
   geom_smooth(method='lm', formula= y~x)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-51-2.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-54-2.png)<!-- -->
 
 Taking the log of mix reduced the linear fit with crime rate.
 
@@ -1620,7 +1697,7 @@ ggplot(data = data2, aes(x = mix, crmrte)) +
   geom_smooth(method='lm', formula= y~x)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-52-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-55-1.png)<!-- -->
 
 ``` r
 ggplot(data = data2, aes(x = log(density), crmrte)) +
@@ -1631,7 +1708,7 @@ ggplot(data = data2, aes(x = log(density), crmrte)) +
   geom_smooth(method='lm', formula= y~x)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-52-2.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-55-2.png)<!-- -->
 
 ##### Percent Young Male in 1980
 
@@ -1644,7 +1721,7 @@ ggplot(data = data2, aes(x = pctymle, crmrte)) +
   geom_smooth(method='lm', formula= y~x)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-53-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-56-1.png)<!-- -->
 
 ``` r
 ggplot(data = data2, aes(x = log(pctymle), crmrte)) +
@@ -1655,7 +1732,7 @@ ggplot(data = data2, aes(x = log(pctymle), crmrte)) +
   geom_smooth(method='lm', formula= y~x)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-53-2.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-56-2.png)<!-- -->
 
 ##### Percent Minority
 
@@ -1673,7 +1750,7 @@ ggplot(data = data2, aes(x = pctmin80, crmrte)) +
   geom_smooth(method='lm', formula= y~x)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-54-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-57-1.png)<!-- -->
 
 ``` r
 ggplot(data = data2, aes(x = log(pctmin80), crmrte)) +
@@ -1684,7 +1761,7 @@ ggplot(data = data2, aes(x = log(pctmin80), crmrte)) +
   geom_smooth(method='lm', formula= y~x)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-54-2.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-57-2.png)<!-- -->
 
 ##### West
 
@@ -1698,7 +1775,7 @@ ggplot(data = data2, aes(x = west, crmrte)) +
   ylab("Crime Rate") + xlab("West (0 = no; 1 = yes)") 
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-55-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-58-1.png)<!-- -->
 
 #### Discussion of results
 
@@ -1790,7 +1867,7 @@ borderline case.
 ols_plot_resid_lev(mod3)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-57-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-60-1.png)<!-- -->
 
 Once again, County \#11 appears to be an outlier with leverage. We
 previously flagged both County \#55 and County \#185 as potentially
@@ -2053,7 +2130,7 @@ leverage on our model.
 ols_plot_resid_lev(mod4)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-62-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-65-1.png)<!-- -->
 
 Once again, county \#55 appears to be an outlier with leverage.
 
@@ -2144,7 +2221,7 @@ issues.
 ols_plot_resid_lev(mod4_out)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-65-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-68-1.png)<!-- -->
 
 ## Checking the 6 Classical Linear Model assumptions for our perferred model (Model \#3)
 
@@ -2180,7 +2257,7 @@ Let’s take a look at the diagnostic plots:
 plot(mod3, which = 1)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-66-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-69-1.png)<!-- -->
 
 Notice that there is only a slight deviation from zero conditional mean,
 indicated by a not perfecly flat curve. This means that our coefficients
@@ -2198,7 +2275,7 @@ this assumption, and tells a similar story.
 plot(mod3, which = 3)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-67-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-70-1.png)<!-- -->
 
 Given this evidence, we will proceed with robust standard errors. The
 code below provides a test for statistical significance of our model
@@ -2247,7 +2324,7 @@ R’s standard diagnostics.
 plot(mod3, which = 2)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-69-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-72-1.png)<!-- -->
 
 We can also visually look at the residuals
 directly.
@@ -2256,7 +2333,7 @@ directly.
 hist(mod3$residuals, breaks = 20, main = "Residuals from Linear Model Predicting log(Crime Rate)")
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-70-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-73-1.png)<!-- -->
 
 Both methods suggest we have a leftward skew. However, we have a large
 sample size, so the CLT tells us that our estimators will have a normal
@@ -2336,7 +2413,7 @@ errors.
 plot(mod5)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-73-1.png)<!-- -->![](project_3_draft_files/figure-gfm/unnamed-chunk-73-2.png)<!-- -->![](project_3_draft_files/figure-gfm/unnamed-chunk-73-3.png)<!-- -->![](project_3_draft_files/figure-gfm/unnamed-chunk-73-4.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-76-1.png)<!-- -->![](project_3_draft_files/figure-gfm/unnamed-chunk-76-2.png)<!-- -->![](project_3_draft_files/figure-gfm/unnamed-chunk-76-3.png)<!-- -->![](project_3_draft_files/figure-gfm/unnamed-chunk-76-4.png)<!-- -->
 
 ## A Regression Table
 

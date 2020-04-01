@@ -577,6 +577,29 @@ ggplot(data_geo_long, aes(value)) +
 - `central`:	=1 if in central N.C.
 - `urban`:	=1 if in SMSA
 
+Are these mutually exclusive categories? It appears that most counties have only one categorization. However, 7 counties have 2 and 33 have 0. 
+
+```{r}
+geo <- data2 %>% rowwise() %>% mutate(geo_sum = west + central + urban) 
+
+table(geo$geo_sum, useNA = "always")
+```
+
+Most of these are central, urban counties. This makes sense because most urban centers in North Carolina are in its center or on its coast (towards the east). Only one is western and urban (County #21). According to the FIPS codes, this would be Buncombe County - which is in the west and contains the city of Asheville. This seems accurate. 
+
+What about the one county that is listed as both western and central (County #71)? According to the FIPS codes, this is Gaston County. Based on Google search, this county looks like it could be either western or central North Carolina (it's on the edge). Perhaps this categorization is accurate. Nothing in the data dictionary tells us that these are mutually exclusive, therefore to limit our assumptions we will live this row as is for now while monitoring its influence on our modeling. 
+
+```{r}
+geo %>% filter(geo_sum == 2) %>% select(county, west, central, urban)
+```
+
+Using the FIPS codes and Google search, it appears that the counties that have all 0's for `west`, `central` and `urban` are in Eastern North Carolina. Thus, these appear to be valid rows. 
+
+```{r}
+geo %>% filter(geo_sum == 0) %>% select(county, west, central, urban)
+```
+
+We will prioritize `west` in our model, as Western North Carolina seems qualitatively different than other regions based on our research. There are less universities and different populations (e.g., many less minorities). The other categories may be important, but are likely less influential on crime patterns. 
 
 ### Relationships between Variables
 
