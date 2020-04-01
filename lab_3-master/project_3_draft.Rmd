@@ -72,9 +72,9 @@ If we find that the severity of punishment is associated with crime rate (with g
 
 - `avgsen`:	avg. sentence, days 
 
-*Number of policy officers per capita*
+*Number of police officers per capita*
 
-The number of police police officers per capita (measured by the variable `polpc`) is a very intuitive example of crime deterrant, as it in theory increases the likelyhood of being caught in the act of the crime and is also a measure of the capacity of the State to enforce the law.
+The number of police officers per capita (measured by the variable `polpc`) is a very intuitive example of crime deterrant, as it in theory increases the likelyhood of being caught in the act of the crime and is also a measure of the capacity of the State to enforce the law.
 
 As our job is to advise a policy maker, it’s very important that we feel safe about the causal interpretation of our findings. After all, the idea is to propose policies with a significant impact on people’s lives. Thus, for statistical rigor, we need to make sure that causal effects go one way (that we have reason to believe that our independent variables have causal effects on our dependent variables, and not the reverse). 
 
@@ -132,6 +132,8 @@ library(car) # statistics
 library(lmtest) # linear modeling
 library(olsrr) # evaluating OLS regression 
 library(sandwich) # correcting heteroskedasticity violation
+library(grid) # to arrange ggplot figures into a grid 
+library(gridExtra) # to arrange ggplot figures into a grid 
 ```
 
 #### Import Data
@@ -172,6 +174,12 @@ Having 2 observations for county #193 is surprising. We can see that these rows 
 data %>% filter(county == 193)
 ```
 
+What else can we glean from the county variable? It appears as though these county IDs could be county FIPS codes. One can see a list here: https://www.lib.ncsu.edu/gis/countfips 
+
+We cannot make assumptions about this, however we can try to supplement some of our data quality checks to see if anything seems to align between the IDs of our counties and their FIPS codes. 
+
+Another thing to note is that we seem to be missing information from 10 of the 100 counties in North Carolina.
+
 We can see that `year` appears to be constant (which is expected). We also don't have any missing values for this column. We can drop this column in future data processing steps. 
 
 ```{r}
@@ -197,7 +205,7 @@ We can see from the following table that we don't have any missing data, which i
 
 However, we can see by the max for each column (p100), that we appear to have a few values that are extremely high. 
 
-For example, one county has an average sentence length (`avgsen`) of 20.7 years.
+For example, one county has weekly wages in the service sector reported to be \$2177.07 (almost 10x the mean of \$275.34). 
 
 ```{r}
 data2_skim <- skim(data2)
@@ -220,23 +228,23 @@ Barring extreme issues with `crmrte` (crime rate), we would recommend focusing o
 
 We don't have enough data points to make a strong claim about the distribution of `crmtre`, however it appears to be approximately normal (with a slight skew which could be an artifact of not having any values below 0). 
 
-```{r}
-ggplot(data2, aes(crmrte)) +
+From our boxplot we can see that most values are between 0.02 and 0.04, however we do have a range of values including some that are close to 0.10. We don't appear to have any spurious values. 
+
+```{r, fig.width = 6, fig.align = "center"}
+p1 <- ggplot(data2, aes(crmrte)) +
   geom_histogram(bins = 35) +
   theme_minimal() +
   xlab("Crime Rate") +
   ylab("Count") +
-  ggtitle("Histogram of Candidate Dependent Variable: Crime Rate")
-```
+  ggtitle("Histogram")
 
-From our boxplot we can see that most values are between 0.02 and 0.04, however we do have a range of values including some that are close to 0.10. We don't appear to have any spurious values. 
-
-```{r}
-ggplot(data2, aes(y = crmrte)) +
+p2 <- ggplot(data2, aes(y = crmrte)) +
   geom_boxplot() +
   theme_minimal() +
   ylab("Crime Rate") +
-  ggtitle("Boxplot of Candidate Dependent Variable: Crime Rate")
+  ggtitle("Boxplot")
+
+grid.arrange(p1, p2, ncol = 2, top = "Candidate Dependent Variable: Crime Rate")
 ```
 
 Our preferred variable (`crmrte`) appears to be of sufficient quality for our analyses and thus we will use it as our dependent variable. 
@@ -300,7 +308,9 @@ ggplot(data_ep_long, aes(x = var, y = value)) +
 ```
 
 
-One can see from the plot below that `wser` for county #185 appears to be an incorrect value - all of the other sector wages are close to the mean for all counties, except for this one (which is about 10x the mean). 
+One can see from the plot below that `wser` for county #185 appears to be an incorrect value - all of the other sector wages are close to the mean for all counties, except for this one (which is about 10x the mean).
+
+From the FIPS codes, this county may correspond to Warren County. This appears to be a small, sparsely populated county along the north border of the state. This is further evidence that the service sector wages are listed incorrectly - we have no reason to believe that this county would have wges in this sector that are 10x higher than the rest of the state. However, given that we do not have much background information on these counties, we will live this in for now while monitoring its effect on our model fits. 
 
 ```{r}
 data_wages <- data2 %>% select(wcon, wtuc, wtrd, wfir, wser, wmfg, wfed, wsta, wloc)%>% colMeans() %>% as_tibble() %>% mutate(names = c("wcon", "wtuc", "wtrd", "wfir", "wser", "wmfg", "wfed", "wsta", "wloc"), Group = "Mean")
@@ -315,6 +325,56 @@ ggplot(data = wages, aes(x = names, y = value, color = Group)) +
   ylab('Wage') +
   theme_minimal() +
   ggtitle("Comparing Wages by Sector between County 185 and Other Counties")
+
+```
+
+Another variable influenced by economic policy is tax revenue per capita. As we noted above, this variable is confounded by wealth. However, you can also affect tax revenue by altering tax rates. 
+
+```{r, fig.width = 6, fig.align = "center"}
+tax1 <- ggplot(data2, aes(taxpc)) +
+  geom_histogram(bins = 25) +
+  theme_minimal() +
+  xlab("Tax Revenue Per Capita") +
+  ylab("Count") +
+  ggtitle("Histogram")
+
+tax2 <- ggplot(data2, aes(y = taxpc)) +
+  geom_boxplot() +
+  theme_minimal() +
+  ylab("Tax Revenue Per Capita") +
+  ggtitle("Boxplot")
+
+grid.arrange(tax1, tax2, ncol = 2, top = "Tax Revenue Per Capita")
+```
+
+We appear to have an extreme value at \$119.76, which is for county #55. We are missing information about whether this variable is west, central, or urban. 
+
+```{r}
+data2 %>% filter(taxpc == max(taxpc))
+```
+
+With such high tax revenue, one would expect that this county had higher wages. This county appears to have federal employee wages well below the mean for North Carolina. It is also below the mean for:
+
+* `wfir` (financial, insurance & real estate)
+* `wmfg` (manufacturing)
+* `wser` (service industry)
+* `wtrd` (trade)
+
+This seems suspect (combined with the fact that we lack information about its location). Based on our FIPS codes, county #55 could be Dare County. Via Google search, we can see that Dare County appears to be an island off the cost of North Carolina. This could explain some of the odd pattern we see in the wage and tax data, as well as why we are missing information about its location. 
+
+```{r}
+data_tax <- data2 %>% select(taxpc, wcon, wtuc, wtrd, wfir, wser, wmfg, wfed, wsta, wloc)%>% colMeans() %>% as_tibble() %>% mutate(names = c("taxpc", "wcon", "wtuc", "wtrd", "wfir", "wser", "wmfg", "wfed", "wsta", "wloc"), Group = "Mean")
+
+taxes_55 <- data2 %>%filter(taxpc == max(taxpc)) %>% select(taxpc, wcon, wtuc, wtrd, wfir, wser, wmfg, wfed, wsta, wloc) %>% colMeans() %>% as_tibble() %>% mutate(names = c("taxpc", "wcon", "wtuc", "wtrd", "wfir", "wser", "wmfg", "wfed", "wsta", "wloc"), Group = "County #55")
+
+taxes <- bind_rows(data_tax, taxes_55)
+
+ggplot(data = taxes, aes(x = names, y = value, color = Group)) + 
+  geom_point() +
+  xlab('Category') +
+  ylab('$') +
+  theme_minimal() +
+  ggtitle("Comparing Tax Revenue and Wages between County 55 and Other Counties")
 
 ```
 
@@ -384,22 +444,22 @@ The analysis above suggests that the data for this county #185 may have been cor
 
 Our dataset has a second kind of criminal justice system indicator, namely the average sentence of convictions (in days). While the assertiveness indicators relate to the certainty of punishment (the extent to which criminals expect to get caught and face punishment), average sentence relates to the severity of the punishment. We can see that average sentence length follows an approximately normal distribution. We have one value well above the rest (above 20; most cluster below 15). 
 
-```{r}
+```{r, fig.width = 6, fig.align = "center"}
 # plot hist
-ggplot(data2, aes(avgsen)) +
+p3 <- ggplot(data2, aes(avgsen)) +
   geom_histogram(bins = 25) +
   theme_minimal() +
-  ggtitle("Histogram of Criminal Justice Policy Variables: Severity") +
+  ggtitle("Histogram") +
   xlab("Average Sentence Severity")
-```
 
-```{r}
-# plot hist
-ggplot(data2, aes(y = avgsen)) +
+# plot boxplot
+p4 <- ggplot(data2, aes(y = avgsen)) +
   geom_boxplot() +
   theme_minimal() +
-  ggtitle("Boxplot of Criminal Justice Policy Variables: Severity") +
+  ggtitle("Boxplot") +
   ylab("Average Sentence Severity")
+
+grid.arrange(p1, p2, ncol = 2, top = "Criminal Justice Policy Variables: Severity")
 ```
 
 The county with the highest average sentence is in Western North Carolina. It has the lowest percentage of minorities of any county (1.28%). Its density is in the lowest quartile of counties but its mix of face-to-face versus other crime is at the median. Although this county seems to be at an extreme, there is no reason to eliminate it from the data at this juncture. 
@@ -408,100 +468,93 @@ The county with the highest average sentence is in Western North Carolina. It ha
 
 ##### Types of Crime 
 
-```{r}
-# plot barplots
-ggplot(data2, aes(mix)) +
+```{r, fig.align = "center"}
+
+# plot hist
+p5 <- ggplot(data2, aes(mix)) +
   geom_histogram(bins = 35) +
   theme_minimal() +
-  ggtitle("Histogram of Contextual Variables: Type of Crime") +
+  ggtitle("Histogram") +
   xlab("offense mix: face-to-face/other")
+
+# plot boxplot
+p6 <- ggplot(data2, aes(y = mix)) +
+  geom_boxplot() +
+  theme_minimal() +
+  ggtitle("Boxplot") +
+  ylab("offense mix")
+
+
+
+grid.arrange(p5, p6, ncol = 2,  top = "Contextual Variables: Type of Crime")
 ```
 
 ##### Demographics 
 
-*Urban/rural dwellers* 
+*Density* 
 
-```{r}
-ggplot(data2, aes(density)) +
+One would expect density to be positively correlated with crime (more people packed together, more crime). 
+
+- `density`:	people per sq. mile
+
+*Minority status*
+
+Minority status is likely positively correlated with crime. Race has a complicated relationship with the criminal justice system and we know that minorities are more likely to be involved. 
+
+- `pctmin80`:	perc. minority, 1980 
+
+*Gender & Age* 
+
+Young males are more likely to be involved in the criminal justice system and we would expect this to positively correlate with crime. 
+
+- `pctymle`:	percent young male, 1980
+
+```{r, fig.align = "center"}
+
+# hist
+p7 <- ggplot(data2, aes(density)) +
   geom_histogram(bins = 35) +
   theme_minimal() +
   xlab("Density") +
   ylab("Count") +
-  ggtitle("Histogram of Contextual Variables: Population Density")
-```
+  ggtitle("Population Density")
 
-
-```{r}
-ggplot(data2, aes(y = density)) +
+# plot boxplot
+p8 <- ggplot(data2, aes(y = density)) +
   geom_boxplot() +
   theme_minimal() +
-  ylab("Density") +
-  ggtitle("Boxplot of Contextual Variables: Population Density")
-```
+  ggtitle("Population Density") +
+  ylab("Density")
 
-*Minority status*
-
-```{r}
-ggplot(data2, aes(pctmin80)) +
+p9 <- ggplot(data2, aes(pctmin80)) +
   geom_histogram(bins = 40) +
   theme_minimal() +
   xlab("% Minority") +
   ylab("Count") +
-  ggtitle("Histogram of Contextual Variables: Percentage Minority (1980)")
-```
+  ggtitle("Percentage Minority (1980)")
 
-
-```{r}
-ggplot(data2, aes(y = pctmin80)) +
+p10 <- ggplot(data2, aes(y = pctmin80)) +
   geom_boxplot() +
   theme_minimal() +
   ylab("% Minority") +
-  ggtitle("Boxplot of Contextual Variables: Percentage Minority (1980)")
-```
+  ggtitle("Percentage Minority (1980)")
 
-- `pctmin80`:	perc. minority, 1980 
-
-*Gender & Age* (young males are more likely to enter the criminal justice system)
-
-```{r}
-ggplot(data2, aes(pctymle)) +
+p11 <- ggplot(data2, aes(pctymle)) +
   geom_histogram(bins = 25) +
   theme_minimal() +
   xlab("% Young Males") +
   ylab("Count") +
-  ggtitle("Histogram of Contextual Variables: Percentage Young Males")
-```
+  ggtitle("Percentage Young Male (1980)")
 
-```{r}
-ggplot(data2, aes(y = pctymle)) +
+p12 <- ggplot(data2, aes(y = pctymle)) +
   geom_boxplot() +
   theme_minimal() +
   ylab("% Young Males") +
-  ggtitle("Boxplot of Contextual Variables: Percentage Young Males")
+  ggtitle("Percentage Young Male (1980)")
+
+grid.arrange(p7, p8, p9, p10, p11, p12, ncol = 2, nrow = 3,  top = "Contextual Variables: Demographics")
 ```
 
-- `pctymle`:	percent young male 
-
-*Wealth*
-
-```{r}
-ggplot(data2, aes(taxpc)) +
-  geom_histogram(bins = 25) +
-  theme_minimal() +
-  xlab("Tax Revenue Per Capita") +
-  ylab("Count") +
-  ggtitle("Histogram of Contextual Variables: Tax Revenue Per Capita")
-```
-
-```{r}
-ggplot(data2, aes(y = taxpc)) +
-  geom_boxplot() +
-  theme_minimal() +
-  ylab("Tax Revenue Per Capita") +
-  ggtitle("Boxplot of Contextual Variables: Tax Revenue Per Capita")
-```
-
-- `taxpc`:	tax revenue per capita 
 
 ##### Geography
 
@@ -849,7 +902,7 @@ ggplot(data = data2, aes(x = log(density), crmrte)) +
   geom_smooth(method='lm', formula= y~x)
 ```
 
-##### Percent Young Male
+##### Percent Young Male in 1980
 
 ```{r}
 ggplot(data = data2, aes(x = pctymle, crmrte)) +
@@ -923,13 +976,13 @@ One can see that there are two potential outliers that also have leverage on our
 ols_plot_resid_lev(mod3)
 ```
 
-Once again, county #11 appears to be an outlier with leverage. County #55 is new in terms of outliers. However, we previously flagged County 185 as potentially having data quality issues.  
+Once again, County #11 appears to be an outlier with leverage. We previously flagged both County #55 and County #185 as potentially having data quality issues. However, it seemed as though County #55 was truly an extreme case whose pattern might be reasonable (since it could be an odd island off the coast of North Carolina). County #185 displayed patterns we could not explain.
 
 ```{r}
 data2 %>% filter(county %in% c(11, 55, 185))
 ```
 
-We can see that without this observation, we now explain a lot more of the variation (~78% compared to ~72%). Additionally, `taxpc` is no longer significant.  
+We can see that without these observations, we now explain a lot more of the variation (~78% compared to ~72%). Additionally, `taxpc` is no longer significant.  
 
 ```{r, warning = F, error = F}
 data2_out2 <- data2 %>% filter(county != 11) %>% filter(county != 55) %>% filter(county != 185)
@@ -1156,7 +1209,7 @@ Based on our dataset, our analyses suggest that acting on crime deterrants withi
 
 It would also be helpful to follow-up on this investigation with the addition of health variables. These omitted variables could have affected the relationships tested here. Specifically, areas with higher cost of living may have people living there with better health care and less stress, which would make them healthier and give them less reason to commit crimes. 
 
-Other factors outside of policy - such as the distribution of minorities - are also important when it comes to crime. Communities with higher rates of either may require additional resources or different types of policies to prevent crime. For example, if the actual number of crimes is different from the number of reported crimes -- for example, in a community with a lot of racial conflict where some groups over-report others to the police -- we would see elevated measures of crime. If policies aim to reduce actual crime (rather than just reported crime), we would need more nuanced measures to track these and would need to turn towards more nuanced ways to address this (perhaps through strenghening group cohesiveness and hosting workshops to reduce racism). 
+Other factors outside of policy -- such as the distribution of minorities -- are also important when it comes to crime. Communities with higher rates of either may require additional resources or different types of policies to prevent crime. For example, if the actual number of crimes is different from the number of reported crimes -- for example, in a community with a lot of racial conflict where some groups over-report others to the police -- we would see elevated measures of crime. If policies aim to reduce actual crime (rather than just reported crime), we would need more nuanced measures to track these and would need to turn towards more nuanced ways to address this (perhaps through strenghening group cohesiveness and hosting workshops to reduce racism). 
 
 Some policies could include: 
 

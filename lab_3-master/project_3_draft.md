@@ -138,13 +138,12 @@ severe punishments if sentenced with a crime.
 
   - `avgsen`: avg. sentence, days
 
-*Number of policy officers per capita*
+*Number of police officers per capita*
 
-The number of police police officers per capita (measured by the
-variable `polpc`) is a very intuitive example of crime deterrant, as it
-in theory increases the likelyhood of being caught in the act of the
-crime and is also a measure of the capacity of the State to enforce the
-law.
+The number of police officers per capita (measured by the variable
+`polpc`) is a very intuitive example of crime deterrant, as it in theory
+increases the likelyhood of being caught in the act of the crime and is
+also a measure of the capacity of the State to enforce the law.
 
 As our job is to advise a policy maker, it’s very important that we feel
 safe about the causal interpretation of our findings. After all, the
@@ -229,6 +228,8 @@ library(car) # statistics
 library(lmtest) # linear modeling
 library(olsrr) # evaluating OLS regression 
 library(sandwich) # correcting heteroskedasticity violation
+library(grid) # to arrange ggplot figures into a grid 
+library(gridExtra) # to arrange ggplot figures into a grid 
 ```
 
 #### Import Data
@@ -380,6 +381,17 @@ data %>% filter(county == 193)
     ## #   wser <dbl>, wmfg <dbl>, wfed <dbl>, wsta <dbl>, wloc <dbl>, mix <dbl>,
     ## #   pctymle <dbl>
 
+What else can we glean from the county variable? It appears as though
+these county IDs could be county FIPS codes. One can see a list here:
+<https://www.lib.ncsu.edu/gis/countfips>
+
+We cannot make assumptions about this, however we can try to supplement
+some of our data quality checks to see if anything seems to align
+between the IDs of our counties and their FIPS codes.
+
+Another thing to note is that we seem to be missing information from 10
+of the 100 counties in North Carolina.
+
 We can see that `year` appears to be constant (which is expected). We
 also don’t have any missing values for this column. We can drop this
 column in future data processing steps.
@@ -447,8 +459,8 @@ which is good\!
 However, we can see by the max for each column (p100), that we appear to
 have a few values that are extremely high.
 
-For example, one county has an average sentence length (`avgsen`) of
-20.7 years.
+For example, one county has weekly wages in the service sector reported
+to be $2177.07 (almost 10x the mean of $275.34).
 
 ``` r
 data2_skim <- skim(data2)
@@ -537,30 +549,28 @@ distribution of `crmtre`, however it appears to be approximately normal
 (with a slight skew which could be an artifact of not having any values
 below 0).
 
-``` r
-ggplot(data2, aes(crmrte)) +
-  geom_histogram(bins = 35) +
-  theme_minimal() +
-  xlab("Crime Rate") +
-  ylab("Count") +
-  ggtitle("Histogram of Candidate Dependent Variable: Crime Rate")
-```
-
-![](project_3_draft_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
-
 From our boxplot we can see that most values are between 0.02 and 0.04,
 however we do have a range of values including some that are close to
 0.10. We don’t appear to have any spurious values.
 
 ``` r
-ggplot(data2, aes(y = crmrte)) +
+p1 <- ggplot(data2, aes(crmrte)) +
+  geom_histogram(bins = 35) +
+  theme_minimal() +
+  xlab("Crime Rate") +
+  ylab("Count") +
+  ggtitle("Histogram")
+
+p2 <- ggplot(data2, aes(y = crmrte)) +
   geom_boxplot() +
   theme_minimal() +
   ylab("Crime Rate") +
-  ggtitle("Boxplot of Candidate Dependent Variable: Crime Rate")
+  ggtitle("Boxplot")
+
+grid.arrange(p1, p2, ncol = 2, top = "Candidate Dependent Variable: Crime Rate")
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+<img src="project_3_draft_files/figure-gfm/unnamed-chunk-12-1.png" style="display: block; margin: auto;" />
 
 Our preferred variable (`crmrte`) appears to be of sufficient quality
 for our analyses and thus we will use it as our dependent variable.
@@ -623,7 +633,7 @@ ggplot(data_ep_long, aes(value)) +
   theme(legend.position = "none")
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
 
 ``` r
 # plot boxplot subplots 
@@ -638,12 +648,22 @@ ggplot(data_ep_long, aes(x = var, y = value)) +
   theme(legend.position = "none")
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
 
 One can see from the plot below that `wser` for county \#185 appears to
 be an incorrect value - all of the other sector wages are close to the
 mean for all counties, except for this one (which is about 10x the
 mean).
+
+From the FIPS codes, this county may correspond to Warren County. This
+appears to be a small, sparsely populated county along the north border
+of the state. This is further evidence that the service sector wages are
+listed incorrectly - we have no reason to believe that this county would
+have wges in this sector that are 10x higher than the rest of the state.
+However, given that we do not have much background information on these
+counties, we will live this in for now while monitoring its effect on
+our model
+fits.
 
 ``` r
 data_wages <- data2 %>% select(wcon, wtuc, wtrd, wfir, wser, wmfg, wfed, wsta, wloc)%>% colMeans() %>% as_tibble() %>% mutate(names = c("wcon", "wtuc", "wtrd", "wfir", "wser", "wmfg", "wfed", "wsta", "wloc"), Group = "Mean")
@@ -665,7 +685,81 @@ ggplot(data = wages, aes(x = names, y = value, color = Group)) +
   ggtitle("Comparing Wages by Sector between County 185 and Other Counties")
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+
+Another variable influenced by economic policy is tax revenue per
+capita. As we noted above, this variable is confounded by wealth.
+However, you can also affect tax revenue by altering tax rates.
+
+``` r
+tax1 <- ggplot(data2, aes(taxpc)) +
+  geom_histogram(bins = 25) +
+  theme_minimal() +
+  xlab("Tax Revenue Per Capita") +
+  ylab("Count") +
+  ggtitle("Histogram")
+
+tax2 <- ggplot(data2, aes(y = taxpc)) +
+  geom_boxplot() +
+  theme_minimal() +
+  ylab("Tax Revenue Per Capita") +
+  ggtitle("Boxplot")
+
+grid.arrange(tax1, tax2, ncol = 2, top = "Tax Revenue Per Capita")
+```
+
+<img src="project_3_draft_files/figure-gfm/unnamed-chunk-17-1.png" style="display: block; margin: auto;" />
+
+We appear to have an extreme value at $119.76, which is for county \#55.
+We are missing information about whether this variable is west, central,
+or urban.
+
+``` r
+data2 %>% filter(taxpc == max(taxpc))
+```
+
+    ## # A tibble: 1 x 24
+    ##   county crmrte prbarr prbconv prbpris avgsen   polpc density taxpc  west
+    ##    <dbl>  <dbl>  <dbl>   <dbl>   <dbl>  <dbl>   <dbl>   <dbl> <dbl> <dbl>
+    ## 1     55 0.0790  0.225   0.208   0.304   13.6 0.00401   0.512  120.     0
+    ## # … with 14 more variables: central <dbl>, urban <dbl>, pctmin80 <dbl>,
+    ## #   wcon <dbl>, wtuc <dbl>, wtrd <dbl>, wfir <dbl>, wser <dbl>,
+    ## #   wmfg <dbl>, wfed <dbl>, wsta <dbl>, wloc <dbl>, mix <dbl>,
+    ## #   pctymle <dbl>
+
+With such high tax revenue, one would expect that this county had higher
+wages. This county appears to have federal employee wages well below the
+mean for North Carolina. It is also below the mean for:
+
+  - `wfir` (financial, insurance & real estate)
+  - `wmfg` (manufacturing)
+  - `wser` (service industry)
+  - `wtrd` (trade)
+
+This seems suspect (combined with the fact that we lack information
+about its location). Based on our FIPS codes, county \#55 could be Dare
+County. Via Google search, we can see that Dare County appears to be an
+island off the cost of North Carolina. This could explain some of the
+odd pattern we see in the wage and tax data, as well as why we are
+missing information about its
+location.
+
+``` r
+data_tax <- data2 %>% select(taxpc, wcon, wtuc, wtrd, wfir, wser, wmfg, wfed, wsta, wloc)%>% colMeans() %>% as_tibble() %>% mutate(names = c("taxpc", "wcon", "wtuc", "wtrd", "wfir", "wser", "wmfg", "wfed", "wsta", "wloc"), Group = "Mean")
+
+taxes_55 <- data2 %>%filter(taxpc == max(taxpc)) %>% select(taxpc, wcon, wtuc, wtrd, wfir, wser, wmfg, wfed, wsta, wloc) %>% colMeans() %>% as_tibble() %>% mutate(names = c("taxpc", "wcon", "wtuc", "wtrd", "wfir", "wser", "wmfg", "wfed", "wsta", "wloc"), Group = "County #55")
+
+taxes <- bind_rows(data_tax, taxes_55)
+
+ggplot(data = taxes, aes(x = names, y = value, color = Group)) + 
+  geom_point() +
+  xlab('Category') +
+  ylab('$') +
+  theme_minimal() +
+  ggtitle("Comparing Tax Revenue and Wages between County 55 and Other Counties")
+```
+
+![](project_3_draft_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
 
 ##### Criminal Justice Policy
 
@@ -700,7 +794,7 @@ ggplot(data_cj_long, aes(value)) +
   ggtitle("Histogram of Criminal Justice Policy Variables: Assertiveness Variables")
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
 
 From our boxplots we can see that we have some extreme values for
 efficiency of conviction, with multiple counties having a rate above 1.
@@ -724,7 +818,7 @@ ggplot(data_cj_long, aes(x = var, y = value)) +
   ggtitle("Boxplot of Criminal Justice Policy Variables: Assertiveness Variables")
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
 
 Which county had the highest conviction rate? This is a county in
 central North Carolina. It has the highest percentage of minorities. It
@@ -764,7 +858,7 @@ ggplot(data = prbs, aes(x = names, y = value, color = Group)) +
   ggtitle("Comparing Criminal Justice Efficiencies between County 185 and Other Counties")
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-24-1.png)<!-- -->
 
 The analysis above suggests that the data for this county \#185 may have
 been corrupted - since it has values for `wser` and `prbconv` at levels
@@ -786,25 +880,23 @@ cluster below 15).
 
 ``` r
 # plot hist
-ggplot(data2, aes(avgsen)) +
+p3 <- ggplot(data2, aes(avgsen)) +
   geom_histogram(bins = 25) +
   theme_minimal() +
-  ggtitle("Histogram of Criminal Justice Policy Variables: Severity") +
+  ggtitle("Histogram") +
   xlab("Average Sentence Severity")
-```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-23-1.png)<!-- -->
-
-``` r
-# plot hist
-ggplot(data2, aes(y = avgsen)) +
+# plot boxplot
+p4 <- ggplot(data2, aes(y = avgsen)) +
   geom_boxplot() +
   theme_minimal() +
-  ggtitle("Boxplot of Criminal Justice Policy Variables: Severity") +
+  ggtitle("Boxplot") +
   ylab("Average Sentence Severity")
+
+grid.arrange(p1, p2, ncol = 2, top = "Criminal Justice Policy Variables: Severity")
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-24-1.png)<!-- -->
+<img src="project_3_draft_files/figure-gfm/unnamed-chunk-25-1.png" style="display: block; margin: auto;" />
 
 The county with the highest average sentence is in Western North
 Carolina. It has the lowest percentage of minorities of any county
@@ -818,116 +910,99 @@ from the data at this juncture.
 ##### Types of Crime
 
 ``` r
-# plot barplots
-ggplot(data2, aes(mix)) +
+# plot hist
+p5 <- ggplot(data2, aes(mix)) +
   geom_histogram(bins = 35) +
   theme_minimal() +
-  ggtitle("Histogram of Contextual Variables: Type of Crime") +
+  ggtitle("Histogram") +
   xlab("offense mix: face-to-face/other")
+
+# plot boxplot
+p6 <- ggplot(data2, aes(y = mix)) +
+  geom_boxplot() +
+  theme_minimal() +
+  ggtitle("Boxplot") +
+  ylab("offense mix")
+
+
+
+grid.arrange(p5, p6, ncol = 2,  top = "Contextual Variables: Type of Crime")
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-25-1.png)<!-- -->
+<img src="project_3_draft_files/figure-gfm/unnamed-chunk-26-1.png" style="display: block; margin: auto;" />
 
 ##### Demographics
 
-*Urban/rural dwellers*
+*Density*
+
+One would expect density to be positively correlated with crime (more
+people packed together, more crime).
+
+  - `density`: people per sq. mile
+
+*Minority status*
+
+Minority status is likely positively correlated with crime. Race has a
+complicated relationship with the criminal justice system and we know
+that minorities are more likely to be involved.
+
+  - `pctmin80`: perc. minority, 1980
+
+*Gender & Age*
+
+Young males are more likely to be involved in the criminal justice
+system and we would expect this to positively correlate with crime.
+
+  - `pctymle`: percent young male, 1980
+
+<!-- end list -->
 
 ``` r
-ggplot(data2, aes(density)) +
+# hist
+p7 <- ggplot(data2, aes(density)) +
   geom_histogram(bins = 35) +
   theme_minimal() +
   xlab("Density") +
   ylab("Count") +
-  ggtitle("Histogram of Contextual Variables: Population Density")
-```
+  ggtitle("Population Density")
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-26-1.png)<!-- -->
-
-``` r
-ggplot(data2, aes(y = density)) +
+# plot boxplot
+p8 <- ggplot(data2, aes(y = density)) +
   geom_boxplot() +
   theme_minimal() +
-  ylab("Density") +
-  ggtitle("Boxplot of Contextual Variables: Population Density")
-```
+  ggtitle("Population Density") +
+  ylab("Density")
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-27-1.png)<!-- -->
-
-*Minority status*
-
-``` r
-ggplot(data2, aes(pctmin80)) +
+p9 <- ggplot(data2, aes(pctmin80)) +
   geom_histogram(bins = 40) +
   theme_minimal() +
   xlab("% Minority") +
   ylab("Count") +
-  ggtitle("Histogram of Contextual Variables: Percentage Minority (1980)")
-```
+  ggtitle("Percentage Minority (1980)")
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-28-1.png)<!-- -->
-
-``` r
-ggplot(data2, aes(y = pctmin80)) +
+p10 <- ggplot(data2, aes(y = pctmin80)) +
   geom_boxplot() +
   theme_minimal() +
   ylab("% Minority") +
-  ggtitle("Boxplot of Contextual Variables: Percentage Minority (1980)")
-```
+  ggtitle("Percentage Minority (1980)")
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-29-1.png)<!-- -->
-
-  - `pctmin80`: perc. minority, 1980
-
-*Gender & Age* (young males are more likely to enter the criminal
-justice system)
-
-``` r
-ggplot(data2, aes(pctymle)) +
+p11 <- ggplot(data2, aes(pctymle)) +
   geom_histogram(bins = 25) +
   theme_minimal() +
   xlab("% Young Males") +
   ylab("Count") +
-  ggtitle("Histogram of Contextual Variables: Percentage Young Males")
-```
+  ggtitle("Percentage Young Male (1980)")
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-30-1.png)<!-- -->
-
-``` r
-ggplot(data2, aes(y = pctymle)) +
+p12 <- ggplot(data2, aes(y = pctymle)) +
   geom_boxplot() +
   theme_minimal() +
   ylab("% Young Males") +
-  ggtitle("Boxplot of Contextual Variables: Percentage Young Males")
+  ggtitle("Percentage Young Male (1980)")
+
+grid.arrange(p7, p8, p9, p10, p11, p12, ncol = 2, nrow = 3,  top = "Contextual Variables: Demographics")
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-31-1.png)<!-- -->
-
-  - `pctymle`: percent young male
-
-*Wealth*
-
-``` r
-ggplot(data2, aes(taxpc)) +
-  geom_histogram(bins = 25) +
-  theme_minimal() +
-  xlab("Tax Revenue Per Capita") +
-  ylab("Count") +
-  ggtitle("Histogram of Contextual Variables: Tax Revenue Per Capita")
-```
-
-![](project_3_draft_files/figure-gfm/unnamed-chunk-32-1.png)<!-- -->
-
-``` r
-ggplot(data2, aes(y = taxpc)) +
-  geom_boxplot() +
-  theme_minimal() +
-  ylab("Tax Revenue Per Capita") +
-  ggtitle("Boxplot of Contextual Variables: Tax Revenue Per Capita")
-```
-
-![](project_3_draft_files/figure-gfm/unnamed-chunk-33-1.png)<!-- -->
-
-  - `taxpc`: tax revenue per capita
+<img src="project_3_draft_files/figure-gfm/unnamed-chunk-27-1.png" style="display: block; margin: auto;" />
 
 ##### Geography
 
@@ -946,7 +1021,7 @@ ggplot(data_geo_long, aes(value)) +
   ggtitle("Barplot of Contextual Variables: Geography")
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-35-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-29-1.png)<!-- -->
 
   - `west`: =1 if in western N.C.
   - `central`: =1 if in central N.C.
@@ -981,7 +1056,7 @@ matrix_corr <- round(cor(data_corr, method = "spearman"), 1)
 corrplot(matrix_corr, type = "lower", method = "ellipse", order = "alphabet")
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-37-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-31-1.png)<!-- -->
 
 ## Results
 
@@ -1041,7 +1116,7 @@ ggplot(data = data2, aes(x = log(crmrte), y = log(prbarr) + log(prbconv))) +
   geom_smooth(method='lm', formula= y~x)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-38-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-32-1.png)<!-- -->
 
 Approximately 40% of the variation in crime rate can be explained by the
 assertiveness of the criminal justice process. Increasing the ratio of
@@ -1096,7 +1171,7 @@ leverage on our model (observation \#24).
 ols_plot_resid_lev(mod1)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-40-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-34-1.png)<!-- -->
 
 The outlier with leverage was in county \#11.
 
@@ -1156,7 +1231,7 @@ analysis thus we cannot claim that it has a data quality issue.
 ols_plot_resid_lev(mod1_out)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-43-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-37-1.png)<!-- -->
 
 ### Model 2
 
@@ -1198,7 +1273,7 @@ ggplot(data = data2, aes(x = wtrd, crmrte)) +
   geom_smooth(method='lm', formula= y~x)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-44-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-38-1.png)<!-- -->
 
 The fit appears slightly improved after logging these wages.
 
@@ -1211,7 +1286,7 @@ ggplot(data = data2, aes(x = log(wtrd), crmrte)) +
   geom_smooth(method='lm', formula= y~x)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-45-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-39-1.png)<!-- -->
 
 We can see that we have a relatively clear linear relationship between
 federal wages and crime.
@@ -1225,7 +1300,7 @@ ggplot(data = data2, aes(x = wfed, crmrte)) +
   geom_smooth(method='lm', formula= y~x)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-46-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-40-1.png)<!-- -->
 
 The fit appears slightly improved after logging these wages - especially
 in terms of variability. One can see that the spread appears more even
@@ -1240,7 +1315,7 @@ ggplot(data = data2, aes(x = log(wfed), crmrte)) +
   geom_smooth(method='lm', formula= y~x)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-47-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-41-1.png)<!-- -->
 
 We can see that we do not have a very linear relationship between tax
 per capita and crime. Many of the points cluster together, leaving
@@ -1255,7 +1330,7 @@ ggplot(data = data2, aes(x = taxpc, crmrte)) +
   geom_smooth(method='lm', formula= y~x)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-48-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-42-1.png)<!-- -->
 
 The fit appears slightly improved after logging tax per capital.
 
@@ -1268,7 +1343,7 @@ ggplot(data = data2, aes(x = log(taxpc), crmrte)) +
   geom_smooth(method='lm', formula= y~x)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-49-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-43-1.png)<!-- -->
 
 #### Discussion on results
 
@@ -1339,7 +1414,7 @@ leverage on our model (observation \#24).
 ols_plot_resid_lev(mod2a)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-51-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-45-1.png)<!-- -->
 
 Once again, county \#11 appears to be an outlier with leverage.
 
@@ -1408,7 +1483,7 @@ quality issues.
 ols_plot_resid_lev(mod2_out)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-54-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-48-1.png)<!-- -->
 
 In checking our OLS assumptions for model 2, we noted that we violated
 the homoskedasticity assumption. The variability of our residuals
@@ -1418,7 +1493,7 @@ decrease as the value of our target variable (crime) increases.
 plot(mod2a, which = 3)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-55-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-49-1.png)<!-- -->
 
 We can see that log(`taxpc`), `density`, and `pctymle` are no longer
 significant. Thus, we will only make conclusions regarding our crime
@@ -1521,7 +1596,7 @@ ggplot(data = data2, aes(x = density, crmrte)) +
   geom_smooth(method='lm', formula= y~x)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-57-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-51-1.png)<!-- -->
 
 ``` r
 ggplot(data = data2, aes(x = log(density), crmrte)) +
@@ -1532,7 +1607,7 @@ ggplot(data = data2, aes(x = log(density), crmrte)) +
   geom_smooth(method='lm', formula= y~x)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-57-2.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-51-2.png)<!-- -->
 
 Taking the log of mix reduced the linear fit with crime rate.
 
@@ -1545,7 +1620,7 @@ ggplot(data = data2, aes(x = mix, crmrte)) +
   geom_smooth(method='lm', formula= y~x)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-58-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-52-1.png)<!-- -->
 
 ``` r
 ggplot(data = data2, aes(x = log(density), crmrte)) +
@@ -1556,9 +1631,9 @@ ggplot(data = data2, aes(x = log(density), crmrte)) +
   geom_smooth(method='lm', formula= y~x)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-58-2.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-52-2.png)<!-- -->
 
-##### Percent Young Male
+##### Percent Young Male in 1980
 
 ``` r
 ggplot(data = data2, aes(x = pctymle, crmrte)) +
@@ -1569,7 +1644,7 @@ ggplot(data = data2, aes(x = pctymle, crmrte)) +
   geom_smooth(method='lm', formula= y~x)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-59-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-53-1.png)<!-- -->
 
 ``` r
 ggplot(data = data2, aes(x = log(pctymle), crmrte)) +
@@ -1580,7 +1655,7 @@ ggplot(data = data2, aes(x = log(pctymle), crmrte)) +
   geom_smooth(method='lm', formula= y~x)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-59-2.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-53-2.png)<!-- -->
 
 ##### Percent Minority
 
@@ -1598,7 +1673,7 @@ ggplot(data = data2, aes(x = pctmin80, crmrte)) +
   geom_smooth(method='lm', formula= y~x)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-60-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-54-1.png)<!-- -->
 
 ``` r
 ggplot(data = data2, aes(x = log(pctmin80), crmrte)) +
@@ -1609,7 +1684,7 @@ ggplot(data = data2, aes(x = log(pctmin80), crmrte)) +
   geom_smooth(method='lm', formula= y~x)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-60-2.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-54-2.png)<!-- -->
 
 ##### West
 
@@ -1623,7 +1698,7 @@ ggplot(data = data2, aes(x = west, crmrte)) +
   ylab("Crime Rate") + xlab("West (0 = no; 1 = yes)") 
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-61-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-55-1.png)<!-- -->
 
 #### Discussion of results
 
@@ -1715,11 +1790,14 @@ borderline case.
 ols_plot_resid_lev(mod3)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-63-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-57-1.png)<!-- -->
 
-Once again, county \#11 appears to be an outlier with leverage. County
-\#55 is new in terms of outliers. However, we previously flagged County
-185 as potentially having data quality issues.
+Once again, County \#11 appears to be an outlier with leverage. We
+previously flagged both County \#55 and County \#185 as potentially
+having data quality issues. However, it seemed as though County \#55 was
+truly an extreme case whose pattern might be reasonable (since it could
+be an odd island off the coast of North Carolina). County \#185
+displayed patterns we could not explain.
 
 ``` r
 data2 %>% filter(county %in% c(11, 55, 185))
@@ -1736,7 +1814,7 @@ data2 %>% filter(county %in% c(11, 55, 185))
     ## #   wmfg <dbl>, wfed <dbl>, wsta <dbl>, wloc <dbl>, mix <dbl>,
     ## #   pctymle <dbl>
 
-We can see that without this observation, we now explain a lot more of
+We can see that without these observations, we now explain a lot more of
 the variation (~78% compared to ~72%). Additionally, `taxpc` is no
 longer
 significant.
@@ -1975,7 +2053,7 @@ leverage on our model.
 ols_plot_resid_lev(mod4)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-68-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-62-1.png)<!-- -->
 
 Once again, county \#55 appears to be an outlier with leverage.
 
@@ -2066,7 +2144,7 @@ issues.
 ols_plot_resid_lev(mod4_out)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-71-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-65-1.png)<!-- -->
 
 ## Checking the 6 Classical Linear Model assumptions for our perferred model (Model \#3)
 
@@ -2102,7 +2180,7 @@ Let’s take a look at the diagnostic plots:
 plot(mod3, which = 1)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-72-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-66-1.png)<!-- -->
 
 Notice that there is only a slight deviation from zero conditional mean,
 indicated by a not perfecly flat curve. This means that our coefficients
@@ -2120,7 +2198,7 @@ this assumption, and tells a similar story.
 plot(mod3, which = 3)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-73-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-67-1.png)<!-- -->
 
 Given this evidence, we will proceed with robust standard errors. The
 code below provides a test for statistical significance of our model
@@ -2169,7 +2247,7 @@ R’s standard diagnostics.
 plot(mod3, which = 2)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-75-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-69-1.png)<!-- -->
 
 We can also visually look at the residuals
 directly.
@@ -2178,7 +2256,7 @@ directly.
 hist(mod3$residuals, breaks = 20, main = "Residuals from Linear Model Predicting log(Crime Rate)")
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-76-1.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-70-1.png)<!-- -->
 
 Both methods suggest we have a leftward skew. However, we have a large
 sample size, so the CLT tells us that our estimators will have a normal
@@ -2258,7 +2336,7 @@ errors.
 plot(mod5)
 ```
 
-![](project_3_draft_files/figure-gfm/unnamed-chunk-79-1.png)<!-- -->![](project_3_draft_files/figure-gfm/unnamed-chunk-79-2.png)<!-- -->![](project_3_draft_files/figure-gfm/unnamed-chunk-79-3.png)<!-- -->![](project_3_draft_files/figure-gfm/unnamed-chunk-79-4.png)<!-- -->
+![](project_3_draft_files/figure-gfm/unnamed-chunk-73-1.png)<!-- -->![](project_3_draft_files/figure-gfm/unnamed-chunk-73-2.png)<!-- -->![](project_3_draft_files/figure-gfm/unnamed-chunk-73-3.png)<!-- -->![](project_3_draft_files/figure-gfm/unnamed-chunk-73-4.png)<!-- -->
 
 ## A Regression Table
 
@@ -2430,13 +2508,13 @@ cost of living may have people living there with better health care and
 less stress, which would make them healthier and give them less reason
 to commit crimes.
 
-Other factors outside of policy - such as the distribution of minorities
-- are also important when it comes to crime. Communities with higher
+Other factors outside of policy – such as the distribution of minorities
+– are also important when it comes to crime. Communities with higher
 rates of either may require additional resources or different types of
 policies to prevent crime. For example, if the actual number of crimes
-is different from the number of reported crimes - for example, in a
+is different from the number of reported crimes – for example, in a
 community with a lot of racial conflict where some groups over-report
-others to the police - we would see elevated measures of crime. If
+others to the police – we would see elevated measures of crime. If
 policies aim to reduce actual crime (rather than just reported crime),
 we would need more nuanced measures to track these and would need to
 turn towards more nuanced ways to address this (perhaps through
