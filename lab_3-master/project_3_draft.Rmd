@@ -156,7 +156,11 @@ Let's take a visual check of our data. We have 91 observations and 25 columns. T
 
 ```{r}
 head(data)
-dim(data)
+```
+
+```{r}
+print(paste("Number of records:", dim(data)[1]))
+print(paste("Number of variables:", dim(data)[2]))
 ```
 
 All 25 columns are numeric. 
@@ -1186,7 +1190,6 @@ mod3 <- mod3_1
 se_mod3 <- se_mod3_1
 ```
 
-
 ```{r}
 # F-test: joint significance of demographic variables
 print("F-test results for joint significance of economic policies") 
@@ -1277,12 +1280,35 @@ We used the following independent variables to predict crime:
 
 The crime rate for central and not central counties is fairly similar. Thus, we don't expect this covariate to be significant. The crime rate has more variance when the counties are grouped by west and non-west. So, we expect `west` to have higher chances of being statistically. The greatest variance on crime rate is observed when the data is grouped by urban and non-urban. However, `urban` and `density` are highly correlated as seen early, so adding `urban` to the model formula my not improve fits.
 
-```{r}
-data2 %>% select(crmrte, west, central, urban) %>% group_by(central) %>% summarise(mean_crmrte = mean(crmrte))
+```{r, warning = F, error = F}
+gg_central <- ggplot(data = data2, aes(x = central, crmrte)) + 
+  geom_bar(stat = "summary", fun.y = "mean") + 
+  theme_minimal() + 
+  theme(axis.text.x=element_blank(), axis.ticks.x=element_blank()) +
+  ggtitle("Central Counties") + 
+  ylab("Crime Rate") + 
+  xlab("West (0 = no; 1 = yes)") +
+  ylim(c(0,0.08))
 
-data2 %>% select(crmrte, west, central, urban) %>% group_by(west) %>% summarise(mean_crmrte = mean(crmrte))
+gg_west <- ggplot(data = data2, aes(x = west, crmrte)) + 
+  geom_bar(stat = "summary", fun.y = "mean") + 
+  theme_minimal() + 
+  theme(axis.text.x=element_blank(), axis.ticks.x=element_blank()) +
+  ggtitle("Western Counties") + 
+  ylab("Crime Rate") + 
+  xlab("West (0 = no; 1 = yes)") +
+  ylim(c(0,0.08))
 
-data2 %>% select(crmrte, west, central, urban) %>% group_by(urban) %>% summarise(mean_crmrte = mean(crmrte))
+gg_urban <- ggplot(data = data2, aes(x = urban, crmrte)) + 
+  geom_bar(stat = "summary", fun.y = "mean") + 
+  theme_minimal() + 
+  theme(axis.text.x=element_blank(), axis.ticks.x=element_blank()) +
+  ggtitle("Urban Counties") + 
+  ylab("Crime Rate") + 
+  xlab("West (0 = no; 1 = yes)") +
+  ylim(c(0,0.08))
+
+grid.arrange(gg_central, gg_west, gg_urban, ncol = 3,  top = "Relationship between Crime Rate and Geographical Variables")
 ```
 
 
