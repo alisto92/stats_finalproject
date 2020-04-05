@@ -251,18 +251,17 @@ head(data)
 ```
 
     ## # A tibble: 6 x 25
-    ##   county  year crmrte prbarr prbconv prbpris avgsen   polpc density taxpc
-    ##    <dbl> <dbl>  <dbl>  <dbl>   <dbl>   <dbl>  <dbl>   <dbl>   <dbl> <dbl>
-    ## 1      1    87 0.0356  0.298  0.528    0.436   6.71 1.83e-3   2.42   31.0
-    ## 2      3    87 0.0153  0.132  1.48     0.450   6.35 7.46e-4   1.05   26.9
-    ## 3      5    87 0.0130  0.444  0.268    0.600   6.76 1.23e-3   0.413  34.8
-    ## 4      7    87 0.0268  0.365  0.525    0.435   7.14 1.53e-3   0.492  42.9
-    ## 5      9    87 0.0106  0.518  0.477    0.443   8.22 8.60e-4   0.547  28.1
-    ## 6     11    87 0.0146  0.525  0.0684   0.5    13    2.88e-3   0.611  35.2
-    ## # … with 15 more variables: west <dbl>, central <dbl>, urban <dbl>,
-    ## #   pctmin80 <dbl>, wcon <dbl>, wtuc <dbl>, wtrd <dbl>, wfir <dbl>,
-    ## #   wser <dbl>, wmfg <dbl>, wfed <dbl>, wsta <dbl>, wloc <dbl>, mix <dbl>,
-    ## #   pctymle <dbl>
+    ##   county  year crmrte prbarr prbconv prbpris avgsen   polpc density taxpc  west
+    ##    <dbl> <dbl>  <dbl>  <dbl>   <dbl>   <dbl>  <dbl>   <dbl>   <dbl> <dbl> <dbl>
+    ## 1      1    87 0.0356  0.298  0.528    0.436   6.71 1.83e-3   2.42   31.0     0
+    ## 2      3    87 0.0153  0.132  1.48     0.450   6.35 7.46e-4   1.05   26.9     0
+    ## 3      5    87 0.0130  0.444  0.268    0.600   6.76 1.23e-3   0.413  34.8     1
+    ## 4      7    87 0.0268  0.365  0.525    0.435   7.14 1.53e-3   0.492  42.9     0
+    ## 5      9    87 0.0106  0.518  0.477    0.443   8.22 8.60e-4   0.547  28.1     1
+    ## 6     11    87 0.0146  0.525  0.0684   0.5    13    2.88e-3   0.611  35.2     1
+    ## # … with 14 more variables: central <dbl>, urban <dbl>, pctmin80 <dbl>,
+    ## #   wcon <dbl>, wtuc <dbl>, wtrd <dbl>, wfir <dbl>, wser <dbl>, wmfg <dbl>,
+    ## #   wfed <dbl>, wsta <dbl>, wloc <dbl>, mix <dbl>, pctymle <dbl>
 
 ``` r
 dim(data)
@@ -270,39 +269,38 @@ dim(data)
 
     ## [1] 91 25
 
-All 25 columns are
-    numeric.
+All 25 columns are numeric.
 
 ``` r
 str(data)
 ```
 
-    ## Classes 'spec_tbl_df', 'tbl_df', 'tbl' and 'data.frame': 91 obs. of  25 variables:
-    ##  $ county  : num  1 3 5 7 9 11 13 15 17 19 ...
-    ##  $ year    : num  87 87 87 87 87 87 87 87 87 87 ...
-    ##  $ crmrte  : num  0.0356 0.0153 0.013 0.0268 0.0106 ...
-    ##  $ prbarr  : num  0.298 0.132 0.444 0.365 0.518 ...
-    ##  $ prbconv : num  0.528 1.481 0.268 0.525 0.477 ...
-    ##  $ prbpris : num  0.436 0.45 0.6 0.435 0.443 ...
-    ##  $ avgsen  : num  6.71 6.35 6.76 7.14 8.22 ...
-    ##  $ polpc   : num  0.001828 0.000746 0.001234 0.00153 0.00086 ...
-    ##  $ density : num  2.423 1.046 0.413 0.492 0.547 ...
-    ##  $ taxpc   : num  31 26.9 34.8 42.9 28.1 ...
-    ##  $ west    : num  0 0 1 0 1 1 0 0 0 0 ...
-    ##  $ central : num  1 1 0 1 0 0 0 0 0 0 ...
-    ##  $ urban   : num  0 0 0 0 0 0 0 0 0 0 ...
-    ##  $ pctmin80: num  20.22 7.92 3.16 47.92 1.8 ...
-    ##  $ wcon    : num  281 255 227 375 292 ...
-    ##  $ wtuc    : num  409 376 372 398 377 ...
-    ##  $ wtrd    : num  221 196 229 191 207 ...
-    ##  $ wfir    : num  453 259 306 281 289 ...
-    ##  $ wser    : num  274 192 210 257 215 ...
-    ##  $ wmfg    : num  335 300 238 282 291 ...
-    ##  $ wfed    : num  478 410 359 412 377 ...
-    ##  $ wsta    : num  292 363 332 328 367 ...
-    ##  $ wloc    : num  312 301 281 299 343 ...
-    ##  $ mix     : num  0.0802 0.0302 0.4651 0.2736 0.0601 ...
-    ##  $ pctymle : num  0.0779 0.0826 0.0721 0.0735 0.0707 ...
+    ## tibble [91 × 25] (S3: spec_tbl_df/tbl_df/tbl/data.frame)
+    ##  $ county  : num [1:91] 1 3 5 7 9 11 13 15 17 19 ...
+    ##  $ year    : num [1:91] 87 87 87 87 87 87 87 87 87 87 ...
+    ##  $ crmrte  : num [1:91] 0.0356 0.0153 0.013 0.0268 0.0106 ...
+    ##  $ prbarr  : num [1:91] 0.298 0.132 0.444 0.365 0.518 ...
+    ##  $ prbconv : num [1:91] 0.528 1.481 0.268 0.525 0.477 ...
+    ##  $ prbpris : num [1:91] 0.436 0.45 0.6 0.435 0.443 ...
+    ##  $ avgsen  : num [1:91] 6.71 6.35 6.76 7.14 8.22 ...
+    ##  $ polpc   : num [1:91] 0.001828 0.000746 0.001234 0.00153 0.00086 ...
+    ##  $ density : num [1:91] 2.423 1.046 0.413 0.492 0.547 ...
+    ##  $ taxpc   : num [1:91] 31 26.9 34.8 42.9 28.1 ...
+    ##  $ west    : num [1:91] 0 0 1 0 1 1 0 0 0 0 ...
+    ##  $ central : num [1:91] 1 1 0 1 0 0 0 0 0 0 ...
+    ##  $ urban   : num [1:91] 0 0 0 0 0 0 0 0 0 0 ...
+    ##  $ pctmin80: num [1:91] 20.22 7.92 3.16 47.92 1.8 ...
+    ##  $ wcon    : num [1:91] 281 255 227 375 292 ...
+    ##  $ wtuc    : num [1:91] 409 376 372 398 377 ...
+    ##  $ wtrd    : num [1:91] 221 196 229 191 207 ...
+    ##  $ wfir    : num [1:91] 453 259 306 281 289 ...
+    ##  $ wser    : num [1:91] 274 192 210 257 215 ...
+    ##  $ wmfg    : num [1:91] 335 300 238 282 291 ...
+    ##  $ wfed    : num [1:91] 478 410 359 412 377 ...
+    ##  $ wsta    : num [1:91] 292 363 332 328 367 ...
+    ##  $ wloc    : num [1:91] 312 301 281 299 343 ...
+    ##  $ mix     : num [1:91] 0.0802 0.0302 0.4651 0.2736 0.0601 ...
+    ##  $ pctymle : num [1:91] 0.0779 0.0826 0.0721 0.0735 0.0707 ...
     ##  - attr(*, "spec")=
     ##   .. cols(
     ##   ..   county = col_double(),
@@ -349,20 +347,18 @@ table(data$county, useNA = "always")
 ```
 
     ## 
-    ##    1    3    5    7    9   11   13   15   17   19   21   23   25   27   33 
-    ##    1    1    1    1    1    1    1    1    1    1    1    1    1    1    1 
-    ##   35   37   39   41   45   47   49   51   53   55   57   59   61   63   65 
-    ##    1    1    1    1    1    1    1    1    1    1    1    1    1    1    1 
-    ##   67   69   71   77   79   81   83   85   87   89   91   93   97   99  101 
-    ##    1    1    1    1    1    1    1    1    1    1    1    1    1    1    1 
-    ##  105  107  109  111  113  115  117  119  123  125  127  129  131  133  135 
-    ##    1    1    1    1    1    1    1    1    1    1    1    1    1    1    1 
-    ##  137  139  141  143  145  147  149  151  153  155  157  159  161  163  165 
-    ##    1    1    1    1    1    1    1    1    1    1    1    1    1    1    1 
-    ##  167  169  171  173  175  179  181  183  185  187  189  191  193  195  197 
-    ##    1    1    1    1    1    1    1    1    1    1    1    1    2    1    1 
-    ## <NA> 
-    ##    0
+    ##    1    3    5    7    9   11   13   15   17   19   21   23   25   27   33   35 
+    ##    1    1    1    1    1    1    1    1    1    1    1    1    1    1    1    1 
+    ##   37   39   41   45   47   49   51   53   55   57   59   61   63   65   67   69 
+    ##    1    1    1    1    1    1    1    1    1    1    1    1    1    1    1    1 
+    ##   71   77   79   81   83   85   87   89   91   93   97   99  101  105  107  109 
+    ##    1    1    1    1    1    1    1    1    1    1    1    1    1    1    1    1 
+    ##  111  113  115  117  119  123  125  127  129  131  133  135  137  139  141  143 
+    ##    1    1    1    1    1    1    1    1    1    1    1    1    1    1    1    1 
+    ##  145  147  149  151  153  155  157  159  161  163  165  167  169  171  173  175 
+    ##    1    1    1    1    1    1    1    1    1    1    1    1    1    1    1    1 
+    ##  179  181  183  185  187  189  191  193  195  197 <NA> 
+    ##    1    1    1    1    1    1    1    2    1    1    0
 
 Having 2 observations for county \#193 is surprising. We can see that
 these rows appear to be exact duplicates.
@@ -372,14 +368,13 @@ data %>% filter(county == 193)
 ```
 
     ## # A tibble: 2 x 25
-    ##   county  year crmrte prbarr prbconv prbpris avgsen   polpc density taxpc
-    ##    <dbl> <dbl>  <dbl>  <dbl>   <dbl>   <dbl>  <dbl>   <dbl>   <dbl> <dbl>
-    ## 1    193    87 0.0235  0.266   0.589   0.423   5.86 0.00118   0.814  28.5
-    ## 2    193    87 0.0235  0.266   0.589   0.423   5.86 0.00118   0.814  28.5
-    ## # … with 15 more variables: west <dbl>, central <dbl>, urban <dbl>,
-    ## #   pctmin80 <dbl>, wcon <dbl>, wtuc <dbl>, wtrd <dbl>, wfir <dbl>,
-    ## #   wser <dbl>, wmfg <dbl>, wfed <dbl>, wsta <dbl>, wloc <dbl>, mix <dbl>,
-    ## #   pctymle <dbl>
+    ##   county  year crmrte prbarr prbconv prbpris avgsen   polpc density taxpc  west
+    ##    <dbl> <dbl>  <dbl>  <dbl>   <dbl>   <dbl>  <dbl>   <dbl>   <dbl> <dbl> <dbl>
+    ## 1    193    87 0.0235  0.266   0.589   0.423   5.86 0.00118   0.814  28.5     1
+    ## 2    193    87 0.0235  0.266   0.589   0.423   5.86 0.00118   0.814  28.5     1
+    ## # … with 14 more variables: central <dbl>, urban <dbl>, pctmin80 <dbl>,
+    ## #   wcon <dbl>, wtuc <dbl>, wtrd <dbl>, wfir <dbl>, wser <dbl>, wmfg <dbl>,
+    ## #   wfed <dbl>, wsta <dbl>, wloc <dbl>, mix <dbl>, pctymle <dbl>
 
 What else can we glean from the county variable? It appears as though
 these county IDs could be county FIPS codes. One can see a list here:
@@ -425,31 +420,31 @@ length(unique(data2$county)) == length(data2$county) # check 1 obs per county
 str(data2) # examine dataframe 
 ```
 
-    ## Classes 'spec_tbl_df', 'tbl_df', 'tbl' and 'data.frame': 90 obs. of  24 variables:
-    ##  $ county  : num  1 3 5 7 9 11 13 15 17 19 ...
-    ##  $ crmrte  : num  0.0356 0.0153 0.013 0.0268 0.0106 ...
-    ##  $ prbarr  : num  0.298 0.132 0.444 0.365 0.518 ...
-    ##  $ prbconv : num  0.528 1.481 0.268 0.525 0.477 ...
-    ##  $ prbpris : num  0.436 0.45 0.6 0.435 0.443 ...
-    ##  $ avgsen  : num  6.71 6.35 6.76 7.14 8.22 ...
-    ##  $ polpc   : num  0.001828 0.000746 0.001234 0.00153 0.00086 ...
-    ##  $ density : num  2.423 1.046 0.413 0.492 0.547 ...
-    ##  $ taxpc   : num  31 26.9 34.8 42.9 28.1 ...
-    ##  $ west    : num  0 0 1 0 1 1 0 0 0 0 ...
-    ##  $ central : num  1 1 0 1 0 0 0 0 0 0 ...
-    ##  $ urban   : num  0 0 0 0 0 0 0 0 0 0 ...
-    ##  $ pctmin80: num  20.22 7.92 3.16 47.92 1.8 ...
-    ##  $ wcon    : num  281 255 227 375 292 ...
-    ##  $ wtuc    : num  409 376 372 398 377 ...
-    ##  $ wtrd    : num  221 196 229 191 207 ...
-    ##  $ wfir    : num  453 259 306 281 289 ...
-    ##  $ wser    : num  274 192 210 257 215 ...
-    ##  $ wmfg    : num  335 300 238 282 291 ...
-    ##  $ wfed    : num  478 410 359 412 377 ...
-    ##  $ wsta    : num  292 363 332 328 367 ...
-    ##  $ wloc    : num  312 301 281 299 343 ...
-    ##  $ mix     : num  0.0802 0.0302 0.4651 0.2736 0.0601 ...
-    ##  $ pctymle : num  0.0779 0.0826 0.0721 0.0735 0.0707 ...
+    ## tibble [90 × 24] (S3: spec_tbl_df/tbl_df/tbl/data.frame)
+    ##  $ county  : num [1:90] 1 3 5 7 9 11 13 15 17 19 ...
+    ##  $ crmrte  : num [1:90] 0.0356 0.0153 0.013 0.0268 0.0106 ...
+    ##  $ prbarr  : num [1:90] 0.298 0.132 0.444 0.365 0.518 ...
+    ##  $ prbconv : num [1:90] 0.528 1.481 0.268 0.525 0.477 ...
+    ##  $ prbpris : num [1:90] 0.436 0.45 0.6 0.435 0.443 ...
+    ##  $ avgsen  : num [1:90] 6.71 6.35 6.76 7.14 8.22 ...
+    ##  $ polpc   : num [1:90] 0.001828 0.000746 0.001234 0.00153 0.00086 ...
+    ##  $ density : num [1:90] 2.423 1.046 0.413 0.492 0.547 ...
+    ##  $ taxpc   : num [1:90] 31 26.9 34.8 42.9 28.1 ...
+    ##  $ west    : num [1:90] 0 0 1 0 1 1 0 0 0 0 ...
+    ##  $ central : num [1:90] 1 1 0 1 0 0 0 0 0 0 ...
+    ##  $ urban   : num [1:90] 0 0 0 0 0 0 0 0 0 0 ...
+    ##  $ pctmin80: num [1:90] 20.22 7.92 3.16 47.92 1.8 ...
+    ##  $ wcon    : num [1:90] 281 255 227 375 292 ...
+    ##  $ wtuc    : num [1:90] 409 376 372 398 377 ...
+    ##  $ wtrd    : num [1:90] 221 196 229 191 207 ...
+    ##  $ wfir    : num [1:90] 453 259 306 281 289 ...
+    ##  $ wser    : num [1:90] 274 192 210 257 215 ...
+    ##  $ wmfg    : num [1:90] 335 300 238 282 291 ...
+    ##  $ wfed    : num [1:90] 478 410 359 412 377 ...
+    ##  $ wsta    : num [1:90] 292 363 332 328 367 ...
+    ##  $ wloc    : num [1:90] 312 301 281 299 343 ...
+    ##  $ mix     : num [1:90] 0.0802 0.0302 0.4651 0.2736 0.0601 ...
+    ##  $ pctymle : num [1:90] 0.0779 0.0826 0.0721 0.0735 0.0707 ...
 
 ##### Missingness & Data Validity
 
@@ -467,61 +462,48 @@ data2_skim <- skim(data2)
 data2_skim
 ```
 
-    ## Skim summary statistics
-    ##  n obs: 90 
-    ##  n variables: 24 
-    ## 
-    ## ── Variable type:numeric ────────────────────────────────────────────────────────────────────────────────────────
-    ##  variable missing complete  n     mean        sd          p0      p25
-    ##    avgsen       0       90 90   9.69     2.83        5.38      7.38  
-    ##   central       0       90 90   0.38     0.49        0         0     
-    ##    county       0       90 90 100.6     58.32        1        51.5   
-    ##    crmrte       0       90 90   0.034    0.019       0.0055    0.021 
-    ##   density       0       90 90   1.44     1.52    2e-05         0.55  
-    ##       mix       0       90 90   0.13     0.082       0.02      0.081 
-    ##  pctmin80       0       90 90  25.71    16.98        1.28     10.02  
-    ##   pctymle       0       90 90   0.084    0.023       0.062     0.074 
-    ##     polpc       0       90 90   0.0017   0.00099     0.00075   0.0012
-    ##    prbarr       0       90 90   0.3      0.14        0.093     0.2   
-    ##   prbconv       0       90 90   0.55     0.35        0.068     0.34  
-    ##   prbpris       0       90 90   0.41     0.081       0.15      0.36  
-    ##     taxpc       0       90 90  38.16    13.11       25.69     30.73  
-    ##     urban       0       90 90   0.089    0.29        0         0     
-    ##      wcon       0       90 90 285.35    47.75      193.64    250.75  
-    ##      west       0       90 90   0.24     0.43        0         0     
-    ##      wfed       0       90 90 442.62    59.95      326.1     398.78  
-    ##      wfir       0       90 90 321.62    54         170.94    285.56  
-    ##      wloc       0       90 90 312.28    28.13      239.17    297.23  
-    ##      wmfg       0       90 90 336.03    88.23      157.41    288.6   
-    ##      wser       0       90 90 275.34   207.4       133.04    229.34  
-    ##      wsta       0       90 90 357.74    43.29      258.33    329.27  
-    ##      wtrd       0       90 90 210.92    33.87      154.21    190.71  
-    ##      wtuc       0       90 90 410.91    77.36      187.62    374.33  
-    ##       p50      p75      p100     hist
-    ##    9.11    11.47     20.7    ▆▇▅▅▂▁▁▁
-    ##    0        1         1      ▇▁▁▁▁▁▁▅
-    ##  103      150.5     197      ▇▆▇▇▆▇▇▇
-    ##    0.03     0.04      0.099  ▆▇▇▃▂▁▁▁
-    ##    0.98     1.57      8.83   ▇▃▁▁▁▁▁▁
-    ##    0.1      0.15      0.47   ▃▇▂▁▁▁▁▁
-    ##   24.85    38.18     64.35   ▇▅▅▅▆▃▁▂
-    ##    0.078    0.084     0.25   ▇▁▁▁▁▁▁▁
-    ##    0.0015   0.0019    0.0091 ▇▃▁▁▁▁▁▁
-    ##    0.27     0.34      1.09   ▆▇▃▁▁▁▁▁
-    ##    0.45     0.59      2.12   ▃▇▂▁▁▁▁▁
-    ##    0.42     0.46      0.6    ▁▁▂▅▇▇▂▁
-    ##   34.92    41.01    119.76   ▇▃▁▁▁▁▁▁
-    ##    0        0         1      ▇▁▁▁▁▁▁▁
-    ##  281.16   314.98    436.77   ▂▇▇▇▅▃▁▁
-    ##    0        0         1      ▇▁▁▁▁▁▁▂
-    ##  448.85   478.26    597.95   ▃▅▅▇▆▃▂▁
-    ##  317.13   342.63    509.47   ▁▁▅▇▃▁▁▁
-    ##  307.65   328.78    388.09   ▁▁▃▇▅▂▁▁
-    ##  321.05   359.89    646.85   ▁▃▇▅▁▁▁▁
-    ##  253.12   277.65   2177.07   ▇▁▁▁▁▁▁▁
-    ##  358.4    383.15    499.59   ▂▃▆▇▆▂▁▁
-    ##  202.99   224.28    354.68   ▃▇▆▂▂▁▁▁
-    ##  404.78   440.68    613.23   ▁▁▂▆▇▂▂▁
+|                                                  |       |
+| :----------------------------------------------- | :---- |
+| Name                                             | data2 |
+| Number of rows                                   | 90    |
+| Number of columns                                | 24    |
+| \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_   |       |
+| Column type frequency:                           |       |
+| numeric                                          | 24    |
+| \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_ |       |
+| Group variables                                  | None  |
+
+Data summary
+
+**Variable type:
+numeric**
+
+| skim\_variable | n\_missing | complete\_rate |   mean |     sd |     p0 |    p25 |    p50 |    p75 |    p100 | hist  |
+| :------------- | ---------: | -------------: | -----: | -----: | -----: | -----: | -----: | -----: | ------: | :---- |
+| county         |          0 |              1 | 100.60 |  58.32 |   1.00 |  51.50 | 103.00 | 150.50 |  197.00 | ▇▇▇▇▇ |
+| crmrte         |          0 |              1 |   0.03 |   0.02 |   0.01 |   0.02 |   0.03 |   0.04 |    0.10 | ▆▇▃▁▁ |
+| prbarr         |          0 |              1 |   0.30 |   0.14 |   0.09 |   0.20 |   0.27 |   0.34 |    1.09 | ▇▆▁▁▁ |
+| prbconv        |          0 |              1 |   0.55 |   0.35 |   0.07 |   0.34 |   0.45 |   0.59 |    2.12 | ▇▅▁▁▁ |
+| prbpris        |          0 |              1 |   0.41 |   0.08 |   0.15 |   0.36 |   0.42 |   0.46 |    0.60 | ▁▂▆▇▁ |
+| avgsen         |          0 |              1 |   9.69 |   2.83 |   5.38 |   7.38 |   9.11 |  11.47 |   20.70 | ▇▇▃▁▁ |
+| polpc          |          0 |              1 |   0.00 |   0.00 |   0.00 |   0.00 |   0.00 |   0.00 |    0.01 | ▇▁▁▁▁ |
+| density        |          0 |              1 |   1.44 |   1.52 |   0.00 |   0.55 |   0.98 |   1.57 |    8.83 | ▇▁▁▁▁ |
+| taxpc          |          0 |              1 |  38.16 |  13.11 |  25.69 |  30.73 |  34.92 |  41.01 |  119.76 | ▇▁▁▁▁ |
+| west           |          0 |              1 |   0.24 |   0.43 |   0.00 |   0.00 |   0.00 |   0.00 |    1.00 | ▇▁▁▁▂ |
+| central        |          0 |              1 |   0.38 |   0.49 |   0.00 |   0.00 |   0.00 |   1.00 |    1.00 | ▇▁▁▁▅ |
+| urban          |          0 |              1 |   0.09 |   0.29 |   0.00 |   0.00 |   0.00 |   0.00 |    1.00 | ▇▁▁▁▁ |
+| pctmin80       |          0 |              1 |  25.71 |  16.98 |   1.28 |  10.02 |  24.85 |  38.18 |   64.35 | ▇▆▅▃▂ |
+| wcon           |          0 |              1 | 285.35 |  47.75 | 193.64 | 250.75 | 281.16 | 314.98 |  436.77 | ▃▇▆▂▁ |
+| wtuc           |          0 |              1 | 410.91 |  77.36 | 187.62 | 374.33 | 404.78 | 440.68 |  613.23 | ▁▂▇▂▂ |
+| wtrd           |          0 |              1 | 210.92 |  33.87 | 154.21 | 190.71 | 202.99 | 224.28 |  354.68 | ▅▇▂▁▁ |
+| wfir           |          0 |              1 | 321.62 |  54.00 | 170.94 | 285.56 | 317.13 | 342.63 |  509.47 | ▁▇▇▁▁ |
+| wser           |          0 |              1 | 275.34 | 207.40 | 133.04 | 229.34 | 253.12 | 277.65 | 2177.07 | ▇▁▁▁▁ |
+| wmfg           |          0 |              1 | 336.03 |  88.23 | 157.41 | 288.60 | 321.05 | 359.89 |  646.85 | ▁▇▃▁▁ |
+| wfed           |          0 |              1 | 442.62 |  59.95 | 326.10 | 398.78 | 448.85 | 478.26 |  597.95 | ▃▆▇▃▁ |
+| wsta           |          0 |              1 | 357.74 |  43.29 | 258.33 | 329.27 | 358.40 | 383.15 |  499.59 | ▂▇▇▁▁ |
+| wloc           |          0 |              1 | 312.28 |  28.13 | 239.17 | 297.23 | 307.65 | 328.78 |  388.09 | ▁▃▇▃▁ |
+| mix            |          0 |              1 |   0.13 |   0.08 |   0.02 |   0.08 |   0.10 |   0.15 |    0.47 | ▇▃▁▁▁ |
+| pctymle        |          0 |              1 |   0.08 |   0.02 |   0.06 |   0.07 |   0.08 |   0.08 |    0.25 | ▇▁▁▁▁ |
 
 ##### Preserve Clean Data
 
@@ -667,12 +649,7 @@ fits.
 
 ``` r
 data_wages <- data2 %>% select(wcon, wtuc, wtrd, wfir, wser, wmfg, wfed, wsta, wloc)%>% colMeans() %>% as_tibble() %>% mutate(names = c("wcon", "wtuc", "wtrd", "wfir", "wser", "wmfg", "wfed", "wsta", "wloc"), Group = "Mean")
-```
 
-    ## Warning: Calling `as_tibble()` on a vector is discouraged, because the behavior is likely to change in the future. Use `tibble::enframe(name = NULL)` instead.
-    ## This warning is displayed once per session.
-
-``` r
 wages_185 <- data2 %>%filter(wser == max(wser)) %>% select(wcon, wtuc, wtrd, wfir, wser, wmfg, wfed, wsta, wloc) %>% colMeans() %>% as_tibble() %>% mutate(names = c("wcon", "wtuc", "wtrd", "wfir", "wser", "wmfg", "wfed", "wsta", "wloc"), Group = "County #185")
 
 wages <- bind_rows(data_wages, wages_185)
@@ -723,9 +700,8 @@ data2 %>% filter(taxpc == max(taxpc))
     ##    <dbl>  <dbl>  <dbl>   <dbl>   <dbl>  <dbl>   <dbl>   <dbl> <dbl> <dbl>
     ## 1     55 0.0790  0.225   0.208   0.304   13.6 0.00401   0.512  120.     0
     ## # … with 14 more variables: central <dbl>, urban <dbl>, pctmin80 <dbl>,
-    ## #   wcon <dbl>, wtuc <dbl>, wtrd <dbl>, wfir <dbl>, wser <dbl>,
-    ## #   wmfg <dbl>, wfed <dbl>, wsta <dbl>, wloc <dbl>, mix <dbl>,
-    ## #   pctymle <dbl>
+    ## #   wcon <dbl>, wtuc <dbl>, wtrd <dbl>, wfir <dbl>, wser <dbl>, wmfg <dbl>,
+    ## #   wfed <dbl>, wsta <dbl>, wloc <dbl>, mix <dbl>, pctymle <dbl>
 
 With such high tax revenue, one would expect that this county had higher
 wages. This county appears to have federal employee wages well below the
@@ -834,9 +810,8 @@ data2 %>% filter(prbconv == max(prbconv))
     ##    <dbl>  <dbl>  <dbl>   <dbl>   <dbl>  <dbl>   <dbl>   <dbl> <dbl> <dbl>
     ## 1    185 0.0109  0.195    2.12   0.443   5.38 0.00122   0.389  40.8     0
     ## # … with 14 more variables: central <dbl>, urban <dbl>, pctmin80 <dbl>,
-    ## #   wcon <dbl>, wtuc <dbl>, wtrd <dbl>, wfir <dbl>, wser <dbl>,
-    ## #   wmfg <dbl>, wfed <dbl>, wsta <dbl>, wloc <dbl>, mix <dbl>,
-    ## #   pctymle <dbl>
+    ## #   wcon <dbl>, wtuc <dbl>, wtrd <dbl>, wfir <dbl>, wser <dbl>, wmfg <dbl>,
+    ## #   wfed <dbl>, wsta <dbl>, wloc <dbl>, mix <dbl>, pctymle <dbl>
 
 The fact that the conviction rate is so high seems odd for county \#185.
 The other measures of assertiveness (for arrest and sentencing) seem
@@ -1261,9 +1236,8 @@ data2 %>% filter(county == 11)
     ##    <dbl>  <dbl>  <dbl>   <dbl>   <dbl>  <dbl>   <dbl>   <dbl> <dbl> <dbl>
     ## 1     11 0.0146  0.525  0.0684     0.5     13 0.00288   0.611  35.2     1
     ## # … with 14 more variables: central <dbl>, urban <dbl>, pctmin80 <dbl>,
-    ## #   wcon <dbl>, wtuc <dbl>, wtrd <dbl>, wfir <dbl>, wser <dbl>,
-    ## #   wmfg <dbl>, wfed <dbl>, wsta <dbl>, wloc <dbl>, mix <dbl>,
-    ## #   pctymle <dbl>
+    ## #   wcon <dbl>, wtuc <dbl>, wtrd <dbl>, wfir <dbl>, wser <dbl>, wmfg <dbl>,
+    ## #   wfed <dbl>, wsta <dbl>, wloc <dbl>, mix <dbl>, pctymle <dbl>
 
 We can see that without this observation, we now explain slightly more
 of the variation (~44% compared to ~40%).
@@ -1504,9 +1478,8 @@ data2 %>% filter(county == 11)
     ##    <dbl>  <dbl>  <dbl>   <dbl>   <dbl>  <dbl>   <dbl>   <dbl> <dbl> <dbl>
     ## 1     11 0.0146  0.525  0.0684     0.5     13 0.00288   0.611  35.2     1
     ## # … with 14 more variables: central <dbl>, urban <dbl>, pctmin80 <dbl>,
-    ## #   wcon <dbl>, wtuc <dbl>, wtrd <dbl>, wfir <dbl>, wser <dbl>,
-    ## #   wmfg <dbl>, wfed <dbl>, wsta <dbl>, wloc <dbl>, mix <dbl>,
-    ## #   pctymle <dbl>
+    ## #   wcon <dbl>, wtuc <dbl>, wtrd <dbl>, wfir <dbl>, wser <dbl>, wmfg <dbl>,
+    ## #   wfed <dbl>, wsta <dbl>, wloc <dbl>, mix <dbl>, pctymle <dbl>
 
 We can see that without this observation, we now explain slightly more
 of the variation (~62% compared to ~59%).
@@ -1887,9 +1860,8 @@ data2 %>% filter(county %in% c(11, 55, 185))
     ## 2     55 0.0790  0.225  0.208    0.304  13.6  0.00401   0.512 120.      0
     ## 3    185 0.0109  0.195  2.12     0.443   5.38 0.00122   0.389  40.8     0
     ## # … with 14 more variables: central <dbl>, urban <dbl>, pctmin80 <dbl>,
-    ## #   wcon <dbl>, wtuc <dbl>, wtrd <dbl>, wfir <dbl>, wser <dbl>,
-    ## #   wmfg <dbl>, wfed <dbl>, wsta <dbl>, wloc <dbl>, mix <dbl>,
-    ## #   pctymle <dbl>
+    ## #   wcon <dbl>, wtuc <dbl>, wtrd <dbl>, wfir <dbl>, wser <dbl>, wmfg <dbl>,
+    ## #   wfed <dbl>, wsta <dbl>, wloc <dbl>, mix <dbl>, pctymle <dbl>
 
 We can see that without these observations, we now explain a lot more of
 the variation (~78% compared to ~72%). Additionally, `taxpc` is no
@@ -2143,9 +2115,8 @@ data2 %>% filter(county == 55)
     ##    <dbl>  <dbl>  <dbl>   <dbl>   <dbl>  <dbl>   <dbl>   <dbl> <dbl> <dbl>
     ## 1     55 0.0790  0.225   0.208   0.304   13.6 0.00401   0.512  120.     0
     ## # … with 14 more variables: central <dbl>, urban <dbl>, pctmin80 <dbl>,
-    ## #   wcon <dbl>, wtuc <dbl>, wtrd <dbl>, wfir <dbl>, wser <dbl>,
-    ## #   wmfg <dbl>, wfed <dbl>, wsta <dbl>, wloc <dbl>, mix <dbl>,
-    ## #   pctymle <dbl>
+    ## #   wcon <dbl>, wtuc <dbl>, wtrd <dbl>, wfir <dbl>, wser <dbl>, wmfg <dbl>,
+    ## #   wfed <dbl>, wsta <dbl>, wloc <dbl>, mix <dbl>, pctymle <dbl>
 
 We can see that without this observation, we now explain slightly more
 of the variation (~74% compared to ~72%).
