@@ -12,16 +12,15 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Introduction
 
-Which policies are most promising in reducing the crime rate? What is the influence of contextual factors (e.g., characteristics of a population) on these relationships? 
+Which policies are most promising in reducing crime rate: those that target punishing crimes (criminal justice policy) or reducing the need to commit crimes (economic policy)? What is the influence of contextual factors (e.g., characteristics of a population) on these relationships? 
 
-We have a cross-section data on crime statistics and indicators that can influence crime rates for a selection of counties in North Carolina. These indicators include local statistics on the performance of the criminal justice system and economc variables that a county administrator can actionate (directly or indirecly). Our task is to examine the data to help a political campaign understand the determinants of crime and generate policy suggestions that are applicable to local government.
+We have a cross-section of data on crime statistics and indicators that can influence crime rates for a selection of counties in North Carolina. Most of the data are from 1987, except for some demographic variables derived from the 1980 Census. These indicators include local statistics on the performance of the criminal justice system and economc variables that a county administrator can act upon (directly or indirectly). Our task is to examine the data to help a political campaign understand the determinants of crime and generate policy suggestions that are applicable to local government and as such we focus primarily on these actionable variables.
 
-We also include a range of contextual variables that help to control the estimated impact of these policies for local characteristics that could influence crime and the efficacy of these policies but are not actionable by a local government (for example, demographic and geographic indicators). We produced a model robust to these, that can help guide policy decisions and help reduce crime across these counties. 
+We also include a range of contextual variables that help to control the estimated impact of these policies for local characteristics that could influence crime and the efficacy of these policies. In contrast to our variables of main focus, these are generally not actionable for a local government (for example, demographic and geographic indicators). We produced a model robust to these, that can help guide policy decisions and help reduce crime across these counties. 
 
 We found that acting on crime deterrants within the criminal justice system (like arrests and convictions) is important when it comes to preventing crime. In fact, for a 10% rise in the probability of arrests and convictions individually, the negative impact on crime rate hovers between 5-7% for arrests and between 4-5% for convictions.
 
-Even though we could not find much support for the importance of economic policy variables to prevent crimes, this could be due to the lack of a good measure of this kind of policy. Either way, we believe that improving living conditions locally should not detract from efforts on the criminal justice system front. Targeting economic development policies that can bring higher wages and improve the quality of life in a region is likely important to deter crime as well.
-
+Even though we could not find much support for the importance of economic policy variables to prevent crimes, this could be due to the lack of a good measure of this kind of policy available in the data. Either way, we believe that improving living conditions locally should not detract from efforts on the criminal justice system front. Targeting economic development policies that can bring higher wages and improve the quality of life in a region is likely important to deter crime as well.
 
 ## Actionable Variables
 
@@ -39,21 +38,23 @@ If we find that the assertiveness of arrest is associated with crime rate (with 
 
 *Probability of conviction* 
 
-If we find that the assertiveness of conviction is associated with crime rate (with higher conviction rates associted with lower crime), we may consider stricter policies around court practices so that more arrests lead to convictions.
+If we find that the assertiveness of conviction is associated with crime rate (with higher conviction rates associated with lower crime), we may consider stricter policies around court practices so that more arrests lead to convictions.
 
 - `prbconv`: number of convictions for every arrest made
 
 *Probability of sentencing* 
 
-If we find that the assertiveness of sentencing is associated with crime rate (with higher sentencing rates associted with lower crime), we may consider stricter policies around judicial practices so that more convictions lead to sentencing. However, whether or not a given conviction carries a prison sentence depends on the severity of the crime. Thus, this variable may be more limited in its explanatory power than arrests and convictions. 
+If we find that the assertiveness of sentencing is associated with crime rate (with higher sentencing rates associted with lower crime), we may consider stricter policies around judicial practices so that more convictions lead to sentencing. However, whether or not a given conviction carries a prison sentence depends on the severity of the crime. 
+
+This variable may be more limited in its explanatory power than arrests and convictions and will not be a prime candidate for our model. 
 
 - `prbpris`: number of prison sentences for every conviction
 
 *Severity of punishment* 
 
-If we find that the severity of punishment is associated with crime rate (with greater severity associted with lower crime), we may consider stricter policies around judicial practices so that people receive more severe punishments if sentenced with a crime.
+If we find that the severity of punishment is associated with crime rate (with greater severity associated with lower crime), we may consider stricter policies around judicial practices so that people receive more severe punishments if sentenced with a crime.
 
-- `avgsen`:	avg. sentence, days 
+- `avgsen`:	average sentence in days 
 
 *Number of police officers per capita*
 
@@ -61,30 +62,36 @@ The number of police officers per capita (measured by the variable `polpc`) is a
 
 As our job is to advise a policy maker, it’s very important that we feel safe about the causal interpretation of our findings. After all, the idea is to propose policies with a significant impact on people’s lives. Thus, for statistical rigor, we need to make sure that causal effects go one way (that we have reason to believe that our independent variables have causal effects on our dependent variables, and not the reverse). 
 
-A cross section of counties though does not allow us to link police presence to crime rates with a causal interpretation. This is because one can expect the counties with larger crime rates in a year *t* would consider necessary to have a larger number of police officers on the streets in year *t*, which can imply a positive correlation between presence of police and crime rates that couldn't be read as police presence leading to *higher* crime rates. In fact, an increase in crime could result in an increase in the number of police officers *and* an increase in police officers could result in a decrease in crime. 
+The cross-section of data available to us are limited in this respect, as they do not allow us to link police presence to crime rates with a causal interpretation. This is because one can expect the counties with larger crime rates in a year *t* would consider necessary to have a larger number of police officers on the streets in year *t*, which can imply a positive correlation between presence of police and crime rates that couldn't be read as police presence leading to *higher* crime rates. In fact, an increase in crime could result in an increase in the number of police officers *and* an increase in police officers could result in a decrease in crime. 
 
 Thus, in this exercise we opted not to include police per capita as a candidate policy variable or covariate. 
 
 ### Economic Policy
 
-# Add more about operationalization of wages
+These variables describe things we could affect with economic policy and speak to wages for different sectors. For example, if increased wages are found to be related significantly to crime, our candidate could consider strategies such as raising the minimum wage in an attempt to lower crime. However, given that North Carolina did not have a wide range of minimum wage policies at this time (or even at present day), it is questionable how much we can test such policies with these data. We do not have enough of a range in the real-life policy we are trying to examine for this to be a good test. 
 
-These variables describe things we could affect with economic policy. For example, if increased wages are found to be related significantly to crime, our candidate could consider strategies such as raising the minimum wage in an attempt to lower crime. These variables speak to wages for different sectors.
+As this is our best proxy for wage policy available in the dataset and given the importance of the economy in crime and human behavior more generally, we will attempt to use these to operationalize this type of policy change. Making inferences about economic policies from the relationships we measure between these and other variables will naturally be limited by the fact that these are a flawed operationalization of variation in wage policy. Omitting these could introduce a bias that would affect the other relationships we measure (for example, one could imagine that being very tough on crime would not serve as much of a deterrant if people are not able to make a living wage and are desperate to get by). We do not have data from other localities that could allow us to better measure wage policy changes. So, we strike a balance between these issues by including these variables as covariates to test the robustness of other relationships, but being cautious about drawing any strong conclusions from them. 
 
 - `wcon`:	weekly wage, construction
-- `wtuc`:	wkly wge, trns, util, commun
-- `wtrd`:	wkly wge, whlesle, retail trade
-- `wfir`:	wkly wge, fin, ins, real est
-- `wser`:	wkly wge, service industry
-- `wmfg`:	wkly wge, manufacturing
-- `wsta`:	wkly wge, state employees
-- `wloc`:	wkly wge, local gov emps
+- `wtuc`:	weekly wage, transportation, utilities, communication
+- `wtrd`:	weekly wage, wholesale and retail trade
+- `wfir`:	weekly wge, finance, insurance, real estate
+- `wser`:	weekly wge, services
+- `wmfg`:	weekly wge, manufacturing
+- `wsta`:	weekly wge, state employees
+- `wloc`:	weekly wge, local government employees
 
-The following federal wage variable will be grouped with other wages in much of our analyses for easier comparison in terms of data quality, however it is not related to minimum wage policy but rather to cost of living. Federal employee wages are adjusted by cost of living in a locality (https://www.opm.gov/policy-data-oversight/pay-leave/salaries-wages/fact-sheets/); thus, this variable could also be used as a marker of cost of living in a county. Cost of living is related to overall wealth in an area and its overall econimic development. If we find a relationship between federal wages and crime, one could predict that changing the economic development of a region may affect crime. However, this variable is confounded by the types of federal workers in an area, since federal wages are determined by a grade system that is tied to the nature of the position and time in position. A specific effort that could affect both of these - bringing more economic development and the right types of high-earning federal employees - would be to attract federal jobs to the area that have higher wages. 
+The following federal wage variable will be grouped with other wages in much of our analyses for easier comparison in terms of data quality, however it is not related to minimum wage policy but rather to cost of living. Federal employee wages are controlled by the federal government (as opposed to local politicians such as our candidate) and are adjusted by cost of living in a locality (https://www.opm.gov/policy-data-oversight/pay-leave/salaries-wages/fact-sheets/); thus, this variable could also be used as a marker of cost of living in a county. If we find a relationship between federal wages and crime, one could predict that changing the economic development of a region may affect crime. However, this variable is confounded by the types of federal workers in an area, since federal wages are determined by a grade system that is tied to the nature of the position and time in position. A specific effort that could affect both of these - bringing more economic development and the right types of high-earning federal employees - would be to attract federal jobs to the area that have higher wages. 
 
-- `wfed`:	wkly wge, fed employees
+Policy recommendations that could be made from this variable are further limited by the fact that cost of living calculations depend to a large extent on the cost of goods. One could imagine a county that had the characteristics we would like to operationalize with this variable: relatively high cost of living, accompanied by broader economic development in the area so that many people can partake in this wealth (e.g., a strong school system, museums, and other community investments). A strong community such as this would likely see lower crime rates - less people would be in a position where they needed to commit crimes to get what they needed. However, this variable alone cannot help us differentiate this type of community compared to others that see a high cost of living without such community investment, where only some wealthy people can enjoy the prosperity and afford the more expensive goods around them. A community that sees this level of inequality may expect to see more crime, as those who are in need would find more reason to take from those who have more than they need. 
 
-The following variable represents tax policy, but it could also reflect overall wealth in a county. Holding tax rate constant, counties with more wealth will have more tax revenue and vice versa. Holding wealth constant, changing the tax rate would change the tax revenue per capita. A better measure of tax policy would be the actual tax rates in each county. Since the impact of policy on this variable is confounded by the overal wealth in a county, the causal relationship would be difficult to interpret. Plus, many taxes are set at the state and federal level; the level of variation at the county-level may be limited for a small state like North Carolina. However, similar to `wfed`, this variable would be related to overall economic development. If we found a relationship between tax revenue and crime rate, it would make sense to try to change development efforts in order to affect crime.  
+Similar to our comments above, this variable is not a good proxy for what we would ideally like to measure (the economic prosperity of a region and how much of the populace can partake in it - which could be influenced by economic development initiatives like investing in businesses large and small). However, we imagine that omitting this variable could introduce a bias in other relationships we find. 
+
+Thus, we find it is important to attempt to measure the relationship between federal wages and crime to test the robustness of other variables, but we will not attempt to make any causal interpretation about these relationships. 
+
+- `wfed`:	weekly wge, federal employees
+
+The following variable represents tax revenue per capita, but does not differentiate between different revenue streams (taxes on income, sales, property, or businesses). It also doesn't help us understand how governments use this revenue (are they corrupt and profiting? or are they reinvesting into the community for schools and other public works?). It also reflects overall wealth in a county. Holding tax rate constant, counties with more wealth will have more tax revenue and vice versa. Holding wealth constant, changing the tax rate would change the tax revenue per capita. A better measure of tax policy would be the actual tax rates in each county, for different entitites. Since the impact of policy on this variable is confounded by the overall wealth in a county and the specific tax policy variations are hidden, the causal relationship would be difficult to interpret. Plus, many taxes are set at the state and federal level; the level of variation at the county-level may be limited for a small state like North Carolina. However, similar to `wfed`, this variable would be related to overall economic development and may be a helpful covariate in testing and teasing out other relationships in the data. 
 
 - `taxpc`:	tax revenue per capita 
 
@@ -94,6 +101,8 @@ Since we are aiming to produce policy recommendations, the following variables m
 
 ### Types of Crime 
 
+Does the type of crime affect the impact of crime policy? For example, if an area has mostly petty crimes, one would imagine that some of the punishment could be more discrete than arresting people - you could handle this with fines, for example. The consequences are real, but less visible and thus perhaps less of a deterrant. This could change the relationship between our crime policy variables like number of arrests per crime (an area with less face-to-face crimes would see less arrests). It could also affect overall number of crimes (if localities are punishing the crimes they can with arrests, but don't have many of those face-to-face crimes to punish, the punishments would not be as visible and so people would have less of a clear deterrant - so they might end up committing a lot of petty crimes). 
+
 - `mix`:	offense mix: face-to-face/other
 
 ### Demographics 
@@ -102,15 +111,21 @@ The following variables describe different aspects of the people that reside in 
 
 *Urban/rural dwellers* 
 
-- `density`:	people per sq. mile 
+Higher density areas would see more interaction between people, which could drive up the number of crimes (more opportunity). It could also drive up the amount of punishment and actual measurement of crime - it might be easier to get away with things  if less people are around to catch you. 
+
+- `density`:	people per square mile 
 
 *Minority status*
 
-- `pctmin80`:	perc. minority, 1980 
+It is well known that people of minority status (compared to whites) are more likely to be involved in the criminal justice system and as such this is a key covariate in our analysis. 
 
-*Gender & Age* (young males are more likely to enter the criminal justice system)
+- `pctmin80`:	percent minority, 1980 
 
-- `pctymle`:	percent young male 
+*Gender & Age* 
+
+Young males are more likely to enter the criminal justice system so this is another demographic variable that we would expect to see related to crime. 
+
+- `pctymle`:	percent young male, 1980 
 
 
 ### Geography
@@ -222,7 +237,7 @@ data2_skim <- skim(data2)
 data2_skim
 ```
 
-Note that `pctmin80` values are not in the [0,1] scale despite being a percentage of total metric. The scale for this variable seems to had been adjusted and it is not matching the rest of percetange metrics in our data set. This difference could be due to the fact that `pctmin80` came from a different source. The scale of `pctmin80` will be adjusted in order to facilitate coefficient interpretation.
+Note that `pctmin80` values are not in the [0,1] scale despite being a percentage of total metric. It seems that it represents X% (for example, 64.35%) as opposed to representing this as a decimal (continuing our example, 0.6435). The scale for this variable does not match the other percentage metric in our data set (`pctymle`). The scale of `pctmin80` will be adjusted in order to facilitate coefficient interpretation.
 
 ```{r}
 data2$pctmin80 <- data2$pctmin80 * 0.01
@@ -281,7 +296,7 @@ data_cj_long <- data2 %>% select(prbarr, prbconv, prbpris) %>%
 data_cj_long$var <- factor(data_cj_long$var, labels = c("Prob Arrest", "Prob Convicted", "Prob Sentenced"))
 ```
 
-We can see that we have different distributions for these, but that they all could be considered somewhat close to normal, with different levels of skew. 
+We can see that we have different distributions for these, but that they all could be considered unimodal, with different levels of skew. 
 
 ```{r}
 # plot hist subplots
@@ -313,15 +328,19 @@ data2 %>% filter(prbconv == max(prbconv))
 The fact that the conviction rate is so high seems odd for county #185. The other measures of assertiveness (for arrest and sentencing) seem close to the mean. That of conviction rate is astronimically high. 
 
 ```{r}
-data_prb <- data2 %>% as_tibble() %>% select(prbarr, prbconv, prbpris) %>% summarise_all(funs(median)) %>% 
-  pivot_longer(c("prbarr","prbconv", "prbpris")) %>% mutate(Group = "Median")
+data_prb <- data2 %>% as_tibble() %>% select(prbarr, prbconv, prbpris) %>% summarise_all(median) %>% 
+  gather(var, value) %>% mutate(Group = "Median")
+
+data_ep_long <- data2 %>% 
+  select(wcon, wtuc, wtrd, wfir, wser, wmfg, wfed, wsta, wloc) %>%
+  gather(key = var, value = value)
 
 prb_185 <- data2 %>%  as_tibble() %>% filter(county == 185) %>% select(prbarr, prbconv, prbpris) %>% 
-  pivot_longer(c("prbarr","prbconv", "prbpris")) %>% mutate(Group = "County #185")
+  gather(var, value) %>% mutate(Group = "County #185")
 
 prbs <- bind_rows(data_prb, prb_185)
 
-ggplot(data = prbs, aes(x = name, y = value, color = Group)) + 
+ggplot(data = prbs, aes(x = var, y = value, color = Group)) + 
   geom_point() +
   xlab('Criminal Justice Assertiveness Category') +
   ylab('Assertiveness') +
@@ -332,33 +351,29 @@ ggplot(data = prbs, aes(x = name, y = value, color = Group)) +
 
 The analysis above suggests that the data for this county #185 may be corrupted - since it has values for `wser` and `prbconv` at levels much higher than the median. Assuming that the number in county stands for the FIPS code, #185 stands for Warren County. During the 1980’s, the citizens of Warren County conducted a series of demonstrations against a newly built landfill as per this [document](https://en.wikipedia.org/wiki/Warren_County_PCB_Landfill). These demonstrations led to multiple arrests and convictions that are not associated with crime but disobedience. As this was an extraordinary event that is outside the process that we are interested in studying, this county’s data will be excluded from subsequent modeling.
 
-```{r}
-data2 <- data2 %>% filter(county != 185)
-print(paste("Number of records:", dim(data2)[1]))
-```
-
-Our dataset has a second kind of criminal justice system indicator, namely the average sentence of convictions (in days). While the assertiveness indicators relate to the certainty of punishment (the extent to which criminals expect to get caught and face punishment), average sentence relates to the severity of the punishment. We can see that average sentence length follows an approximately normal distribution. We have one value well above the rest (above 20; most cluster below 15). 
+Our dataset has a second kind of criminal justice system indicator, namely the average sentence of convictions (in days). While the assertiveness indicators relate to the certainty of punishment (the extent to which criminals expect to get caught and face punishment), average sentence relates to the severity of the punishment. We can see that average sentence length follows an approximately normal distribution. We have one value well above the rest (above 20 days; most cluster below 15). 
 
 ```{r, fig.width = 6, fig.align = "center"}
 p1 <- ggplot(data2, aes(avgsen)) +
   geom_histogram(bins = 35) +
   theme_minimal() +
-  xlab("Years of Imprisonment") +
+  xlab("Days of Imprisonment") +
   ylab("Count") +
   ggtitle("Histogram")
 
 p2 <- ggplot(data2, aes(y = avgsen)) +
   geom_boxplot() +
   theme_minimal() +
-  ylab("Years of Imprisonment") +
+  ylab("Days of Imprisonment") +
   ggtitle("Box plot")
 
 grid.arrange(p1, p2, ncol = 2, top = "Criminal Justice Indicator: Average Sentence")
 ```
 
-The county, Madison County, with the highest average sentence is in Western North Carolina.
+According to the FIPS codes, county #115 - the county with the highest average sentence- is  Madison County. This county is in Western North Carolina (in the area commonly known as Appalachia) and is the home to the state's oldest jail, which was still in operation in 1987 (https://mountainx.com/news/murky-future-for-madisons-historic-jailhouse/). The fact that this county is in one of the less prosperous areas of the USA and is also home to a well-known, long lived jail, could perhaps explain its high level of average sentence length. It's plausible that this is not a data quality issue and so to be conservative, we retain this outlier in the data at this stage but will monitor its effect on model fits. 
 
 ```{r}
+# show counties with highest average sentence
 data2 %>% arrange(desc(avgsen)) %>% head(5)
 ```
 
@@ -368,7 +383,7 @@ One of the things an administrator can affect with economic policy is minimum wa
 
 In the plots below, we plot weekly wage by sector with a red vertical line indicating this minimum weekly wage.
 
-We can see that `wrtd` (Wholesale/Retail/Trade) wages are closest to the minimum wage - which would suggest that wages in this sector would be most influenced by changes to the minimum wage. The next sector that would be influenced is `wser` (Services). Additionally, `wser` may be a messier measure of income because many in this sector work in restaurants and make additional income through tips - however, some people may not report this income. Meanwhile, those working in Wholesale/Retail/Trade may be more likely to work in places like malls, which would not provide additional income as tips and would be a better measure of low-income wages. 
+We can see that `wrtd` (Wholesale & Retail Trade) wages are closest to the minimum wage - which would suggest that wages in this sector would be most influenced by changes to the minimum wage. The next sector that would be influenced is `wser` (Services). Additionally, `wser` may be a messier measure of income because many in this sector work in restaurants and make additional income through tips - however, some people may not report this income. Meanwhile, those working in Wholesale & Retail Trade may be more likely to work in places like malls, which would not provide additional income as tips and would be a better measure of low-income wages. 
 
 Note that most wages are approximately normally distributed.
 
@@ -377,15 +392,15 @@ Note that most wages are approximately normally distributed.
 data_ep_long <- data2 %>% 
   select(wcon, wtuc, wtrd, wfir, wser, wmfg, wfed, wsta, wloc) %>%
   gather(key = var, value = value)
-
+# convert to factor for better labeling 
 data_ep_long$var <- factor(data_ep_long$var,
                            levels = c("wcon", "wtuc", "wtrd", "wfir",
                                       "wser", "wmfg", "wfed", "wsta", "wloc"),
                            labels = c("Construction", 
                                       "Utilities/Transport", 
-                                      "Wholesale/Retail/Trade",
+                                      "Wholesale & Retail Trade",
                                       "Finance/Insurance/Real Estate",
-                                      "Service Industry",
+                                      "Services",
                                       "Manufacturing",
                                       "Federal Emp",
                                       "State Emp",
@@ -418,11 +433,10 @@ ggplot(data_ep_long, aes(x = var, y = value)) +
 
 ```
 
-Another variable influenced by economic policy is tax revenue per capita. As we noted above, this variable is confounded by wealth. However, you can also affect tax revenue by altering tax rates. 
-
-The distribution of `taxpc` is skewed. This distribution coupled with the fact that `taxpc` is measured in dollars makes the variable a top candidate for a log transformation.
+Another variable influenced by economic policy is tax revenue per capita. The distribution of `taxpc` is skewed. This distribution coupled with the fact that `taxpc` is measured in dollars makes the variable a top candidate for a log transformation.
 
 ```{r, fig.width = 6, fig.align = "center"}
+# plot histogram & boxplot
 tax1 <- ggplot(data2, aes(taxpc)) +
   geom_histogram(bins = 25) +
   theme_minimal() +
@@ -439,9 +453,10 @@ tax2 <- ggplot(data2, aes(y = taxpc)) +
 grid.arrange(tax1, tax2, ncol = 2, top = "Tax Revenue Per Capita")
 ```
 
-We appear to have an extreme value at \$119.76, which is for county #55. This seems to the in the rural eastern part of the state (as its's not west, nor central, nor urban). 
+We appear to have an extreme value at \$119.76, which is for county #55. This seems to the in the rural, eastern part of the state (as it's not west, nor central, nor urban). When we cross-check this county with FIPS codes, it appears that this is likely Dare County. Dare County is a small island off the coast of North Carolina that is not an urban center. 
 
 ```{r}
+# filter for only #55
 data2 %>% filter(taxpc == max(taxpc))
 ```
 
@@ -452,20 +467,20 @@ With such high tax revenue, one would expect that this county had higher wages. 
 * `wser` (service industry)
 * `wtrd` (trade)
 
-This seems suspect (combined with the fact that we lack information about its location). Based on FIPS codes, county #55 could be Dare County. Via Google search, we can see that Dare County appears to be an island off the cost of North Carolina. This could explain some of the odd pattern we see in the wage and tax data. 
+This seems suspect (combined with the fact that we lack information about its location). However, the location suggests that there is an explanation for such an anamolous pattern. This is a popular vacation spot and could be expected to see high rates of tax revenue of this wealthier populace compared to the rest of the state, as it is mainly wealthier people who would be expected to own vacation homes on such an island. 
 
 Given that we do not have much background information on these counties, we will keep county #55 in and monitor its effect on our model fits.
 
 ```{r}
-data_tax <- data2 %>% as_tibble() %>% select(taxpc, wcon, wtuc, wtrd, wfir, wser, wmfg, wfed, wsta, wloc) %>% summarise_all(funs(median)) %>% 
-  pivot_longer(c("taxpc", "wcon", "wtuc", "wtrd", "wfir", "wser", "wmfg", "wfed", "wsta", "wloc")) %>% mutate(Group = "Median")
-
+# reformat data for plotting
+data_tax <- data2 %>% as_tibble() %>% select(taxpc, wcon, wtuc, wtrd, wfir, wser, wmfg, wfed, wsta, wloc) %>% summarise_all(median) %>% 
+  gather(var, value) %>% mutate(Group = "Median")
 taxes_55 <- data2 %>%  as_tibble() %>% filter(county == 55) %>% select(taxpc, wcon, wtuc, wtrd, wfir, wser, wmfg, wfed, wsta, wloc) %>% 
-  pivot_longer(c("taxpc", "wcon", "wtuc", "wtrd", "wfir", "wser", "wmfg", "wfed", "wsta", "wloc")) %>% mutate(Group = "County #55")
-
+  gather(var, value)%>% mutate(Group = "County #55")
 taxes <- bind_rows(data_tax, taxes_55)
 
-ggplot(data = taxes, aes(x = name, y = value, color = Group)) + 
+# plot
+ggplot(data = taxes, aes(x = var, y = value, color = Group)) + 
   geom_point() +
   xlab('Category') +
   ylab('$') +
@@ -506,13 +521,13 @@ grid.arrange(p5, p6, ncol = 2,  top = "Contextual Variables: Type of Crime")
 
 One would expect density to be positively correlated with crime (more people packed together, more crime). 
 
-- `density`:	people per sq. mile
+- `density`:	people per square mile
 
 *Minority status*
 
 Minority status is likely positively correlated with crime. Race has a complicated relationship with the criminal justice system and we know that minorities are more likely to be involved. 
 
-- `pctmin80`:	perc. minority, 1980 
+- `pctmin80`:	percent minority, 1980 
 
 *Gender & Age* 
 
@@ -567,19 +582,19 @@ p12 <- ggplot(data2, aes(y = pctymle)) +
 grid.arrange(p7, p8, p9, p10, p11, p12, ncol = 2, nrow = 3,  top = "Contextual Variables: Demographics")
 ```
 
-In terms of density outliers, we discovered that the county #199 has the highest density. This county probably is Mecklenburg County, which holds the city of Charlotte (the state capital and one of it's most populated cities).
+In terms of density outliers, we discovered that the county #119 has the highest density. This county probably is Mecklenburg County, which holds the city of Charlotte (the state capital and one of its most populated cities).
 
 ```{r}
 data2 %>% filter(density == max(density))
 ```
 
-The smallest county would correspond to Martin County.
+The smallest county would correspond to Swain County, a very rural county in the Western part of the state. It straddles two national parks/forests (Great Smoky Mountains National Park and Nantahala National Forest), which would explain why it is so low density. 
 
 ```{r}
 data2 %>% filter(density == min(density))
 ```
 
-In terms of "Percetage Young Male", county #133, Onslow county based on FIPS code, is the main outlier. This deviation in % of young males could be due to Camp Lejeune, a marine corps base. Most recruits are young males and so this base would impact the % of young males in the population, epecially because the density of Onslow county is low. Contrary to the expected, the % of young males would have a negative impact on crime becuase recruits would most likely not commit crimes. However, this is not the only county in North Carolina with a military base, so we will be keeping this observation and monitoring it's impact on model results.
+In terms of "Percetage Young Male", county #133 (Onslow County based on FIPS code) is the main outlier in this cluster of demographic variables. This deviation in percent of young males could be due to Camp Lejeune, a marine corps base. Most recruits are young males and so this base would impact the percent of young males in the population, epecially because the density of Onslow county is low. Contrary to our expected relationship, the percent of young males would have a negative impact on crime becuase recruits would most likely not commit crimes. However, this is not the only county in North Carolina with a military base, so we will be keeping this observation and monitoring its impact on model results.
 
 ```{r}
 data2 %>% filter(pctymle == max(pctymle))
@@ -588,62 +603,62 @@ data2 %>% filter(pctymle == max(pctymle))
 
 ##### Geography
 
-```{r}
-# format data for subplots 
-data_geo_long <- data2 %>% select(west, central, urban) %>%
-  gather(key = var, value = value)
-```
-
-The data shows that on average, 8% live in an urban area, 32% of people in the relevant counties live in the center of the state, 21% live in the west.
-
-```{r}
-# plot barplots
-ggplot(data_geo_long, aes(value)) +
-  geom_bar() +
-  facet_grid(~var) +
-  theme_minimal() +
-  ggtitle("Barplot of Contextual Variables: Geography")
-```
+We were given 3 variables to track geography:
 
 - `west`:	=1 if in western N.C.
 - `central`:	=1 if in central N.C.
 - `urban`:	=1 if in SMSA
 
-Are these mutually exclusive categories? It appears that most counties have only one categorization. However, 7 counties have 2 and 33 have 0. 
+
+Are these mutually exclusive categories? No, these are dummy variables that code for west versus central versus east (with east being the default) and urban versus rural (with rural being the default). 
 
 ```{r}
-geo <- data2 %>% rowwise() %>% mutate(geo_sum = west + central + urban) 
-
-table(geo$geo_sum, useNA = "always")
+# create new east variable
+geo_supp <- data2 %>% mutate(east = ifelse(west == 0 & central == 0, 1, 0), rural = ifelse(urban == 0, 1, 0))
 ```
 
-Most of these are central, urban counties. This makes sense because most urban centers in North Carolina are in its center or on its coast (towards the east). Only one is western and urban (County #21). According to the FIPS codes, this would be Buncombe County - which is in the west and contains the city of Asheville. This seems accurate. 
+Eastern counties represent `` `r paste0(as.character(round(100*sum(geo_supp$east)/90, 2)), "%")` `` of the 89 counties. Central counties represent `` `r paste0(as.character(round(100*sum(geo_supp$central)/90, 2)), "%")` ``. Western counties represent the rest at `` `r paste0(as.character(round(100*sum(geo_supp$west)/90, 2)), "%")` ``. These sum to 100% which indicates that this dummy variable has likely been correctly coded. 
 
-What about the one county that is listed as both western and central (County #71)? According to the FIPS codes, this is Gaston County. Based on Google search, this county looks like it could be either western or central North Carolina (it's on the edge). Perhaps this categorization is accurate. Nothing in the data dictionary tells us that these are mutually exclusive, therefore to limit our assumptions we will keep this row as in for now while monitoring its influence on our modeling. 
+Urban counties represent `` `r paste0(as.character(round(100*sum(geo_supp$urban)/90, 2)), "%")` `` of the 89 counties. Rural counties represent `` `r paste0(as.character(round(100*sum(geo_supp$rural)/90, 2)), "%")` ``. These also sum to 100%.
 
 ```{r}
-geo %>% filter(geo_sum == 2) %>% select(county, west, central, urban)
+# reformat data for plotting
+geo_long <- geo_supp %>%
+  mutate_at(vars(west, central, east, rural, urban), ~ ifelse(. == 0, NA, .)) %>%
+  gather("location", "present1", west, central, east, na.rm = TRUE) %>%
+  gather("type", "present2", rural, urban, na.rm = TRUE) %>%
+  select(-present1, -present2)
 ```
 
-Using the FIPS codes and Google search, it appears that the counties that have all 0's for `west` and `central` are in fact in Eastern North Carolina. Thus, these appear to be valid rows. 
+We can see that the vast number of counties are rural across central, western, and eastern counties. Central counties have the largest share of urban geographies. 
 
 ```{r}
-geo %>% filter(geo_sum == 0) %>% select(county, west, central, urban)
+# plot barplots
+ggplot(geo_long, aes(x = location, fill = type)) +
+  geom_bar(position = "fill") +
+  theme_minimal() +
+  ggtitle("Barplot of Contextual Variables: Geography") +
+  xlab("")
 ```
 
-We will prioritize `west` in our model, as Western North Carolina seems qualitatively different from other regions based on our research (for example, there are less universities in this region). The other categories may be important, but are likely less influential on crime patterns.
+We will prioritize `west` in our model, as Western North Carolina seems qualitatively different from other regions based on our research (for example, there are less universities in this region). It has the least number of rural counties and represents the least number of counties overall. The other categories may be important, but we expect them to be less influential on crime patterns.
 
 ### Relationships between Variables
+
+```{r}
+# remove row with erroneous values (#185) before investigating relationships 
+data2 <- data2 %>% filter(county != 185)
+print(paste("Number of records:", dim(data2)[1]))
+```
 
 One would expect variables within each of the above groups to be correlated to each other. 
 
 This is a correlation matrix of all of our variables, using Spearman's due to the fact that not all variables follow a normal distribution. 
 
-As expected, `prbarr` and `prbconv`show a negative correlation with `crmrte`. However, `prbpris` and `avgsen` do not show a strong correlation with `cmrte`. For the former, the fact that in general the number of impressionments is low likely weakens the relationship between `prbpris` and `cmrte`. Following the same rationale, given that most crimes committed are petty crimes with relatively low sentence lengths, average sentence length might not be a strong deterrant of crimes. 
-
+As expected, `prbarr` and `prbconv`show a negative correlation with `crmrte`. However, `prbpris` and `avgsen` do not show a strong correlation with `cmrte`. For the former, the fact that in general the number of imprisonments is low likely weakens the relationship between `prbpris` and `cmrte`. Following the same rationale, given that most crimes committed are petty crimes with relatively low sentence lengths, average sentence length might not be a strong deterrant of crimes. 
 Additionally, `mix` does not seem to have a strong correlation with `cmrte`. `mix` values are very low, indicating that face-to-face crimes are almost non-existant across counties. Thus, the low variability of `mix` does not allow for a material relationship between type of crime, as currently defined, and crime rate.
 
-Wages appear to all be positively correlated with crime, which is opposite our original conjecture. Rather than seeing that increased wages are related to reduced crime, we are seeing that higher wages is related to higher crime. This unexpected direction could be explained in part by the strong positive relationship between the wage variables and `density` and between `crmrte` and `density`. Thus, we will not include the wage variables in early models - and it will be important to include additional variables to control for other influences that could be affecting the direction of this relationship. 
+Wages appear to all be positively correlated with crime, which is opposite our original conjecture. Rather than seeing that increased wages are related to reduced crime, we are seeing that higher wages is related to higher crime. This unexpected direction could be explained in part by the strong positive relationship between the wage variables and `density` and between `crmrte` and `density`. It could also be due to our points above about inequality - if inequality is strongly correlated both to crime and higher wages, it could be a hidden factor that is driving this relationship. Thus, we will not include the wage variables in early models - and it will be important to include additional variables to control for other influences that could be affecting the direction of this relationship. 
 
 Population density has a strong positive relationshiop with crime rate. This relationship is expected as a greater number of poeple living close to each other arguably increase the number of interactions and may lead to higher crime rate. `density` is also positively correlated with other geographical variables. For example, `urban` and `density` are positively correlated because cities will have higher density due to their urban design. We will pay special attention to these strongly correlated variables as they can increase the variance of models' residuals if they are cast as independent variables in the same equation.
 
@@ -665,11 +680,9 @@ We will next build a set of models to investigate our research question, documen
 
 In order select the optimal model in a certain range of model specification options, we will rely on information criteria (IC). Two popular IC are AIC (Akaike information criterion) and and BIC (Bayesian information criterion ). AIC and BIC for a model is usually written in the form $-2logL + kp$, where $L$ is the likelihood function, $p$ is the number of parameters in the model, and $k$ is $2$ for AIC and $log(n)$ for BIC ($n$=number of observations). Despite subtle theoretical differences, their only difference in practice is the size of the penalty: BIC penalizes model complexity more heavily. To maintain parsimony of our models, we opted to use BIC for model selection.  
 
-
-
 ### Model set #1
 
-For our first model, we aimed to evaluate the relationship between crime policy and crime. 
+For our first model, we aimed to evaluate the relationship between crime policy and crime. The null hypothesis in this case is that there is no linear relationship between crime and our main crime policy variables (`prbarr` and `prbconv`). The alternative is that there is a negative relationship such that higher probabilities of arrest and conviction are related to lower rates of crime. 
 
 We used the following independent variables to predict crime: 
 
@@ -721,15 +734,15 @@ stargazer(
 ```
 
 
-The table above shows that approximately 42% of the variation in log(crime rate) can be explained by the criminal justice policy variables. Besides, coefficients on log(`prbpris`)  and log(`avg_sen`) were not statistically significant in equation (1). Also note that excluding criminal justice indicators that are weakly related to crime - log(`av_sen`) in equation 2 and log(`av_sen`)/log(`prbpris`) in equation 3 - did not affect R2 nor changed the estimated coefficients on the criminal justice indicators that are strongly related to crime - log(`prbarr`) and log(`prbconv`) - in a material way. Finally - and more importantly - BIC is smaller for the most parsimonious model (equation 3). 
+The table above shows that approximately 38-40% of the variation in log(crime rate) can be explained by the criminal justice policy variables. Coefficients on log(`prbpris`)  and log(`avg_sen`) were not statistically significant in equation (1). Also note that excluding criminal justice indicators that are weakly related to crime - log(`av_sen`) in equation 2 and log(`av_sen`)/log(`prbpris`) in equation 3 - did not affect R2 nor changed the estimated coefficients on the criminal justice indicators that are strongly related to crime - log(`prbarr`) and log(`prbconv`) - in a material way. Finally - and more importantly - BIC is smaller for the most parsimonious model (equation 3). 
 
 Thus simple models featuring only criminal justice policies as independent variables suggest that, ceteris paribus, a 10% increase in `prbarr` would lead to a ~7% decrease in crime rate, while a 10% increase in `prbconv` would lead to a ~5% decrease in crime rate. This figures have  important practical meaning as well, as a 5-7% change in crime rate may have material impact on people's lives.  
 
-At this point, we believe we have enough information to conclude that log(`prbpris`)  and log(`avg_sen`) do not have explanatory power over log(`crmrte`) that goes beyond that of log(`prbarr`) and log(`prbconv`). Thus, our preferred specification at this stage is that of equation 3, and log(`prbpris`) and log(`avg_sen`) will be removed from future modeling exercises to avoid over fitting. 
+At this point, we believe we have enough information to conclude that log(`prbpris`)  and log(`avg_sen`) do not have explanatory power over log(`crmrte`) that goes beyond that of log(`prbarr`) and log(`prbconv`). Thus, our preferred specification at this stage is that of equation 3, and log(`prbpris`) and log(`avg_sen`) will be removed from future modeling exercises to avoid over fitting. This outcome is not unexpected given our concerns above regarding the dependency between the type of crime someone commits and whether they are imprisoned and for how long. 
 
 #### Outliers
 
-One can see that there is one potential outlier that also has a lot of leverage on our model (observation #6). 
+One can see that there is one potential outlier that also has leverage, meaning that it is an extreme outlier (observation #6). 
 
 ```{r}
 ols_plot_resid_lev(mod1)
@@ -741,7 +754,7 @@ The outlier with leverage was in county #11.
 data2 %>% filter(county == 11)
 ```
 
-We can see that without this observation, we now explain slightly more of log(`crmrte`) variation (46% compared to 41%). 
+Is this outlier influential on our model? We can see that without this observation, we now explain slightly more of log(`crmrte`) variation (46% compared to 41%). With p-values well under an alpha of .05 for both models, excluding this outlier would not affect our conclusion regarding the relationship between these variables. Either way, we conclude that this relationship is unlikely due to chance alone.
 
 ```{r, warning = F, error = F}
 data2_out <- data2 %>% filter(county != 11)
@@ -763,9 +776,9 @@ It seems that politicians could leverage criminal justice policies to curb crime
 
 For our second model, we aimed to evaluate the relationship between crime and economic policies and context. Two important economic variables that politicians control at the state level are minimum wage and fiscal expenditure. As such, only wages of industries whose average wage is close to the minimum wage will be included. Wages of government workers (state and local) will be included as candidates of economic policy variables as well. 
 
-We are aware that there are several determinants of wages that go beyond political interference, so wages - even in industries whose average wage is close to the minimum - are only proxies of economic policies. As such, conclusions from these exercises should be taken as hints for future research rather than strong evidence. For example, better research on minimum wage policy, such as [this](https://evans.uw.edu/policy-impact/minimum-wage-study), exists and should also be drawn upon when making decisions on minimum wage policy.
+We are aware that there are several determinants of wages that go beyond political interference, so wages - even in industries whose average wage is close to the minimum - are only proxies of economic policies. As such, conclusions from these exercises should be taken as hints for future research rather than strong evidence. For example, better research on minimum wage policy, such as [this](https://evans.uw.edu/policy-impact/minimum-wage-study), exists and should also be drawn upon when making decisions on minimum wage policy. We carry out hypothesis testing from these but will interpret the outcomes cautiously. 
 
-For reasons discussed at the EDA section of this project, `wfed` and `taxpc` will be included as economic context variables as they are proxies of local wealth and overall economic development.
+For reasons discussed at the EDA section of this project, `wfed` and `taxpc` will be included as economic context variables as they are a proxy of local wealth and overall economic development.
 
 We used the following independent variables to predict crime: 
 
@@ -804,7 +817,7 @@ We can see that we have a fairly linear relationship between trade industry wage
 ggplot(data = data2, aes(x = log(wtrd), y = log(crmrte))) +
   geom_point() +
   theme_minimal() +
-  ggtitle("Relationship between Crime Rate and Wholesale/Retail/Trade Wages") + 
+  ggtitle("Relationship between Crime Rate and Wholesale & Retail Trade Wages") + 
   xlab("Average Weekly Wage") + ylab("Log Crime Rate") +
   geom_smooth(method='lm', formula= y~x)
 ```
@@ -866,13 +879,13 @@ ggplot(data = data2, aes(x = log(taxpc), log(crmrte))) +
 
 #### Discussion on results
 
-The first iteration of this model includes all crime justice variable as well as all economic policy and wealth variables. In this specification, none of the economic policy variables had statistically significant relationships to crime. The estimated relationship between `taxpc` and `wfed` with `crmrte` was statistically significant and positive. This indicates crime rate is larger in wealthier counties, which is intuitive. At this point, these variables could be capturing part of the crime rate variation that should be captured by demographic variables such as `density`. We expect the estimated coefficients for these variables to fluctuate slightly as we add more variables.
+The first iteration of this model includes all crime justice variable as well as all economic policy and wealth variables. In this specification, none of the economic policy variables had statistically significant relationships to crime. The estimated relationship between `taxpc` and `wfed` with `crmrte` was statistically significant and positive. This indicates that crime rate is larger in wealthier counties. At this point, these variables could be capturing part of the crime rate variation that should be captured by demographic variables such as `density`. We expect the estimated coefficients for these variables to fluctuate as we add more variables.
 
-We also conducted an F-test to determine if the economic policy variables were jointly statistically significant at explaining variation on crime rate. In this test, the null hypothesis was that economic policies, proxied by average wages at lower paying industries and at local administrations, do not have explanatory power over crime rate. The p-value of this test was 90% and thus we could not reject the hypotesis, which reinforces that the model is not being able to capture the impact of economic policy on crime.  
+We also conducted an F-test to determine if the economic policy variables were jointly statistically significant at explaining variation on crime rate. In this test, the null hypothesis was that economic policies, proxied by average wages at lower paying industries and at local administrations, do not have explanatory power over crime rate. The p-value of this test was well over our alpha of .05 and thus we could not reject the hypothesis, which reinforces that the model is not able to capture the impact of economic policy on crime.  
 
-The elimination of wage variables from our models is advisable also according to BIC, which is smaller for the most parsimonious model (equation 2). Notice though that we decided to keep one proxy for wage policy, Retail/Trade sector wages - as discussed at the EDA section of this project, Retail/Trade sector wages are the ones that are closest to the minimum wage and most likely to be affected by a minimum wage policy. Keeping it will give it a chance to be tested with other covariates, such as density and percentage of minority, in the coming model specifications.
+The elimination of wage variables from our models is advisable also according to BIC, which is smaller for the most parsimonious model (equation 2). Notice though that we decided to keep one proxy for wage policy, Wholesale & Retail Trade sector wages - as discussed at the EDA section of this project, Wholesale & Retail Trade sector wages are the ones that are closest to the minimum wage and most likely to be affected by a minimum wage policy. Keeping it will give it a chance to be tested with other covariates, such as density and percentage of minority, in the coming model specifications.
 
-It's interesting to note that, when we added economic policy and context to the model, the estimated impact of  criminal justice policies gets somewhat smaller. The current set of model specifications suggest that, ceteris paribus, a 10% increase in `prbarr` would lead to a ~6% decrease in crime rate, while a 10% increase in `prbconv` would lead to a ~4% decrease in crime rate (vs. an estimated impact of ~7% and ~5% for the first set of models presented in the previous section). Either way, this figures still have important practical meaning, as a 4-6% change in crime rate may have material impact on people's lives.  
+It's interesting to note that when we added economic policy and context to the model, the estimated impact of  criminal justice policies gets somewhat smaller. The current set of model specifications suggest that, ceteris paribus, a 10% increase in `prbarr` would lead to a ~6% decrease in crime rate, while a 10% increase in `prbconv` would lead to a ~4% decrease in crime rate (vs. an estimated impact of ~7% and ~5% for the first set of models presented in the previous section). Either way, these figures still have important practical meaning, as a 4-6% change in crime rate may have material impact on people's lives.  
 
 
 ```{r}
@@ -914,7 +927,7 @@ linearHypothesis(mod2_1, c("log(wser)=0", "log(wsta)=0", "log(wtrd)=0", "log(wlo
 
 #### Outliers
 
-Once again, county #11 (observation #6) appears to be an outlier with leverage. Note that it's leverage has decreased as we increased more variables. We expect the leverage of the outlier to decrease as we add more variables that explain the residuals' variation.
+Once again, county #11 (observation #6) appears to be an outlier with leverage (it is an extreme value). Note that it's influence has decreased as we increased the number of variables. We expect the influence of the outlier to decrease as we add more variables that explain the residuals' variation.
 
 ```{r}
 ols_plot_resid_lev(mod2)
@@ -930,7 +943,7 @@ se_mod2_out <- sqrt(diag(vcovHC(mod2_out)))
 stargazer(mod2, mod2_out,  type = "text", se = list(se_mod2, se_mod2_out) , column.labels = c("With county #11", "Without county #11") , star.cutoffs = c(0.05, 0.01, 0.001))
 ```
 
-Although eliminating the outlier has improved our fit and this outlier has leverage, we do not have any reason to suspect that it is due to data quality issues.
+Although eliminating the outlier has improved our fit and this outlier has some influence, we do not have any reason to suspect that it is due to data quality issues. Additionally, we see the same outcome as before when it comes to the inferences we draw with or without this outlier: since our p-value is well under .05 for the model with and without this outlier, our conclusions remain the same. 
 
 *Conclusion*
 
@@ -938,10 +951,9 @@ We fail to reject hypothesis that economic policy variables have no impact on cr
 
 The previous section's finding that that politicians could leverage criminal justice policies to curb crime rate was robust to the inclusion of economic variables to the model. In fact, this second model set featuring criminal justice and economic policies as well as economic context as independent variables suggests that, ceteris paribus, a 10% increase in `prbarr` would lead to a ~6% decrease in crime rate, while a 10% increase in `prbconv` would lead to a ~4% decrease in crime rate. These estimated effects are statistically significant and have important practical meaning.
 
-
 ### Model set #3
 
-For our third model, we added demographic control variables to evaluate the robustness of the relationship between crime policy, economic policy, and crime rate when controlling for key demographic factors.
+For our third model, we added demographic control variables to evaluate the robustness of the relationship between crime policy, economic policy, and crime rate when controlling for key demographic factors. We retained the one wage variable we thought was the best proxy for minimum wage (`wtrd`) so that we can confirm that the lack of relationship was not due to omitted variables biasing our estimates (at least when it comes to those available in the data). 
 
 We used the following independent variables to predict crime: 
 
@@ -953,7 +965,7 @@ We used the following independent variables to predict crime:
 
 *Economic policy* 
 
-(3) log(`wtr`)
+(3) log(`wtrd`)
 
 *Economic context*
 
@@ -1038,21 +1050,21 @@ ggplot(data = data2, aes(x = pctmin80*pctmin80, log(crmrte))) +
   theme_minimal() +
   ggtitle("Relationship between log(Crime Rate) and Percent Minority^2") + 
   ylab("Log Crime Rate") + xlab("Minority^2") +
-  geom_smooth(method='lm', formula= y~x)
+  geom_smooth(method='lm', formula= y ~x + I(x^2))
 ```
 
 
 #### Discussion of results 
 
-The first iteration (equation  1) of this set of models includes all the variables listed above. The model fit increased dramatically in comparison to model #2. Among all demographic variables included, only `pctymle` is not individually significant. A F-test was conduced with results leading us to reject the null that the demographic variables are not jointly significant. 
+The first iteration (equation  1) of this set of models includes all the variables listed above. The model fit increased dramatically in comparison to model #2. Among all demographic variables included, only `pctymle` is not individually significant. An F-test was conducted with results leading us to reject the null that the demographic variables are not jointly significant. 
 
-In the following iteration (equation  2), we added a quadratic transformation of % minority, in an attempt to capture the seemingly concave relationship of this variable with log(`crmrte`) discussed above. Such addition though doesn't seem to be interesting, as the coefficient on the quadratic transformation of % minority is not statistically significant and the model's BIC is slightly larger in equation 1.   
+In the following iteration (equation  2), we added a quadratic transformation of percent minority, in an attempt to capture the seemingly concave relationship of this variable with log(`crmrte`) discussed above. Such addition though doesn't seem to be interesting, as the coefficient on the quadratic transformation of percent minority is not statistically significant and the model's BIC is slightly larger in equation 1.   
 
-In equation 3, we dropped `pctymle`. Again, such specification doesn't seem to be interesting, as the model's BIC is slightly larger than in equation 1.    
+In equation 3, we dropped `pctymle`. Again, such specification doesn't seem to be interesting, as the model's BIC is slightly larger than in equation 1. This variable was also not a point of focus as far as contextual variables, although it was not eliminated.    
 
 Given the above, our preferred equation in the model set #3 is equation 1.  
 
-As in model set #2 discussed in the above section, our economic policy proxy do not seem to be statistically significant in explaining the variation in crime rate. We would need to do more external research on the economic policies ran in North Carolina during the time the data collection occurred to determine why these proxies are not significant. 
+As in model set #2 discussed in the above section, our economic policy proxy do not seem to be statistically significant in explaining the variation in crime rate. This lack of relationship has not changed with the addition of control variables. We would need to do more external research on the economic policies ran in North Carolina during the time the data collection occurred to determine why these proxies are not significant. As we noted above, there are also issues of omitted variable bias that could be masking this relationship. 
 
 Including factors related to the demographics of an area (density; percent young males; and percent minorities) increases our ability to predict crime (lower BIC and larger adjusted R2 vs. model set #2, with only criminal and economic variables). Thus, demographic factors should be part of of our model. Higher rates of any of these are related to higher levels of crime.
 
@@ -1118,7 +1130,7 @@ Once again, County #55 appears to be an outlier with leverage. It seemed as thou
 data2 %>% filter(county == 55)
 ```
 
-We can see that without these observations, we now explain a some more of the variation (~78% compared to ~74%).
+Do these influence our model fits? We can see that without these observations, we now explain a some more of the variation (~78% compared to ~73%). Although eliminating the outlier has improved our fit we do not have any reason to suspect that they have data quality issues. However, once again dropping these variables would not change the statistical inference we made from these models as our p-values were well under our alpha of .05 with and without these outliers. 
 
 ```{r, warning = F, error = F}
 data2_out <- data2 %>%  filter(county != 55)
@@ -1137,8 +1149,6 @@ stargazer(
   , notes = c("Robust SE")
 )
 ```
-
-Although eliminating the outlier has improved our fit we do not have any reason to suspect that they have data quality issues.
 
 *Conclusion*
 
@@ -1188,40 +1198,18 @@ We used the following independent variables to predict crime:
 
 #### Discussion on results
 
-The crime rate for central and not central counties is fairly similar. Thus, we don't expect this covariate to be significant. The crime rate has more variance when the counties are grouped by west and non-west. So, we expect the coefficient on `west` to have higher chances of being statistically significant. The greatest variance on crime rate is observed when the data is grouped by urban and non-urban. However, `urban` and `density` are highly correlated as seen early, so adding `urban` to the model my not improve fits.
+The crime rate for central and not central counties is fairly similar. Thus, we don't expect this covariate to be significant. The crime rate has more variance when the counties are grouped by west and non-west. So, we expect the coefficient on `west` to have higher chances of being statistically significant. The greatest variance on crime rate is observed when the data is grouped by urban and non-urban. However, `urban` and `density` are highly correlated as seen early, so adding `urban` to the model may not improve fits.
 
-```{r, warning = F, error = F}
-gg_central <- ggplot(data = data2, aes(x = central, crmrte)) + 
-  geom_bar(stat = "summary", fun.y = "mean") + 
-  theme_minimal() + 
-  theme(axis.text.x=element_blank(), axis.ticks.x=element_blank()) +
-  ggtitle("Central Counties") + 
-  ylab("Crime Rate") + 
-  xlab("West (0 = no; 1 = yes)") +
-  ylim(c(0,0.08))
+Central and eastern counties show similar patterns - they have more urban than rural counties, and rural counties have lower crime. However, as we suspected western counties show a different pattern: they have more rural than urban counties, and those rural counties have a higher crime rate. 
 
-gg_west <- ggplot(data = data2, aes(x = west, crmrte)) + 
-  geom_bar(stat = "summary", fun.y = "mean") + 
-  theme_minimal() + 
-  theme(axis.text.x=element_blank(), axis.ticks.x=element_blank()) +
-  ggtitle("Western Counties") + 
-  ylab("Crime Rate") + 
-  xlab("West (0 = no; 1 = yes)") +
-  ylim(c(0,0.08))
-
-gg_urban <- ggplot(data = data2, aes(x = urban, crmrte)) + 
-  geom_bar(stat = "summary", fun.y = "mean") + 
-  theme_minimal() + 
-  theme(axis.text.x=element_blank(), axis.ticks.x=element_blank()) +
-  ggtitle("Urban Counties") + 
-  ylab("Crime Rate") + 
-  xlab("West (0 = no; 1 = yes)") +
-  ylim(c(0,0.08))
-
-grid.arrange(gg_central, gg_west, gg_urban, ncol = 3,  top = "Relationship between Crime Rate and Geographical Variables")
+```{r}
+# plot barplots
+ggplot(geo_long, aes(x = location, y = crmrte, fill = type)) +
+  geom_bar(position="dodge", stat="identity") +
+  theme_minimal() +
+  ggtitle("Barplot of Contextual Variables: Geography") +
+  xlab("")
 ```
-
-
 
 *Statistics Interpretation*
 
@@ -1286,7 +1274,7 @@ To summarize, this fourth model set featuring criminal justice, economic policie
 
 #### Outliers
 
-One can see that there is one potential outlier that also has a lot of leverage on our model. 
+One can see that there is one potential outlier that also has leverage. 
 
 ```{r}
 ols_plot_resid_lev(mod4)
@@ -1298,7 +1286,7 @@ Once again, county #55 appears to be an outlier with leverage.
 data2 %>% filter(county == 55)
 ```
 
-We can see that without this observation, we now explain slightly more of the variation (~76% compared to ~71%). 
+We can see that without this observation, we now explain slightly more of the variation (~76% compared to ~71%). Although eliminating the outlier has improved our fit, and although this outlier has leverage, we do not have any reason to suspect that our data has quality issues. However, it does not change the statistical significance of any of the observed relationships with alpha of .05 so it would not change our conclusions regarding these inferences. 
 
 ```{r, warning = F, error = F}
 data2_out <- data2 %>% filter(county != 55)
@@ -1317,16 +1305,13 @@ stargazer(
 )
 ```
 
-Although eliminating the outlier has improved our fit, and although this outlier has leverage, we do not have any reason to suspect that our data has quality issues.
-
-
 ## Regression Table
 
 Across all equations estimated, our preferred one is equation 3 in the table below. It's from model set #3, which counts on criminal justice, economic policies, economic context and demographic variables (but not geographic variables) to predict crime rate. In fact, equation 3 has the lowest BIC, which justifies our choice. 
 
 An important message of this whole exercise of crime rate modeling is that the estimated impact of an increase in the probability of arrest and probability of conviction on crime remains virtually unchanged versus across model specifications. For a 10% rise in each probability individually, the negative impact on crime rate hovers between 5-7% for the probability arrest and between 4-5% for the probability of conviction. 
 
-Overall, we could not find a significant impact of economic policies (proxied by wages in lower-paying industries) on crime. 
+Overall, we could not find a significant impact of economic policies (proxied by wages in lower-paying industries) on crime. The main contextual variables around the economy - `wfed` and `taxpc` show different patterns. The latter is not statistically significant across any of the models below. The former is, but its effects are partially absorbed when we add in covariates. This is aligned with our hunch that the relationship between this variable and crime rate would be greatly influenced by other factors and thus we shy away from any causal interpretation here. 
 
 We also found that, across demographic determinants, the percentage of minority seems to be the most relevant one in explaining cross-county variation of crime rate, with a positive impact on crime. Finally, it seems that geographic  determinants explain only a little of cross-county variation of crime rate in North Carolina, which can be explained by the fact that it's a small state after all.     
 
@@ -1382,7 +1367,7 @@ Our residuals versus fitted values plot seems to indicate heteroskedasticity - t
 plot(mod3, which = 3)
 ```
 
-We are not particularly worried about not meeting the homoskedasticity assumption because the output of all our models already  featured robust standard errors, because that's good conservative practice.
+We are not particularly worried about not meeting the homoskedasticity assumption because the output of all our models already featured robust standard errors. We chose to use these throughout as this is a conservative practice that helps us in being more confident around our inferences. 
 
 ## Normality of Errors
 
@@ -1400,7 +1385,6 @@ hist(mod3$residuals, breaks = 20, main = "Residuals from Linear Model Predicting
 
 Both methods suggest we have a leftward skew. However, we have a large sample size, so the CLT tells us that our estimators will have a normal sampling distribution. Our look at the histogram confirms that we aren't in a situation with an extreme skew, so n=90 should be sufficient for the CLT.
 
-
 # A Discussion of Other Possible Omitted Variables
 
 We lacked many variables related to community-level elements that would be expected to affect crime. Could any of these have affected the quantification of the relationships above? 
@@ -1412,52 +1396,76 @@ In order to access the direction of omitted variable bias (OVB) resulting from e
 
 As we assume the true relationship between `crmrte` and `prbarr`/`prbconv` is negative, a positive OVB biases the estimated effect of `prbarr`/`prbconv` on `crmrte` towards zero, while a negative OVB biases the estimated effect away from zero.
 
-
-
 ```{r}
 plot(mod4, which = 3)
 ```
 
 
-**Unemployment** ($\alpha > 0$ and $\beta > 0$ -> towards zero)
-Unemployment rate is likely positively related to crime rate (so $\alpha > 0$), people in need are more prone to commit crimes. Unemployment rate is also arguably positively related to  `prbarr`/`prbconv` (so $\beta > 0$) due to the negative stigma that unemployment people have in society. Thus this OV should bias the estimated effect of `prbarr`/`prbconv` on `crmrte` towards zero.  
+**Unemployment** ($\alpha > 0$ and $\beta > 0$ -> away from zero)
+Unemployment rate is likely positively related to crime rate (so $\alpha > 0$), people in need are more prone to commit crimes. Unemployment rate is also arguably positively related to  `prbarr`/`prbconv` (so $\beta > 0$) due to the negative stigma that unemployment people have in society. Thus this OV should bias the estimated effect of `prbarr`/`prbconv` on `crmrte` away from zero.  
 
 
-**Education levels of the populace** ($\alpha < 0$ and $\beta < 0$ -> towards zero)
+**Education levels of the populace** ($\alpha < 0$ and $\beta < 0$ -> away from zero)
 
-Although we may be able to proxy education levels by looking at which region a county is in, we would not have a very good measure of overall education levels. A county can have a university, but still have low education levels overall. One would predict that education is negatively related to crime - the more educated, the less crime one would expect to commit (so $\alpha < 0$). The relationship between education levels and `prbarr`/`prbconv` is arguably negative due to the negative stigma that less educated people have in society (so $\beta < 0$) . Thus this OV should bias the estimated effect of `prbarr`/`prbconv` on `crmrte` towards zero.
+Although we may be able to proxy education levels by looking at which region a county is in, we would not have a very good measure of overall education levels. A county can have a university, but still have low education levels overall. One would predict that education is negatively related to crime - the more educated, the less crime one would expect to commit (so $\alpha < 0$). The relationship between education levels and `prbarr`/`prbconv` is arguably negative due to the negative stigma that less educated people have in society (so $\beta < 0$) . 
 
-**Public works & investments** ($\alpha < 0$ and $\beta < 0$ -> towards zero)
+**Public works & investments** ($\alpha < 0$ and $\beta < 0$ -> away from zero)
 
-One would predict that, like education, the relationship between and public works and investments with crime would be negative (so $\alpha < 0$). More nonprofits and community organizations could strengthen ties in communities, thus lowering crime rates. This factor would probably be inversely related to arrest and conviction rates, since a more punitive society may invest less in rewards to the community (so $\beta < 0$)
+One would predict that, like education, the relationship between and public works and investments with crime would be negative (so $\alpha < 0$). More nonprofits and community organizations could strengthen ties in communities, thus lowering crime rates. This factor would probably be inversely related to arrest and conviction rates, since a more punitive society may invest less in rewards to the community. 
 
-###################### NOTE: I haven't checked OV after that (3 items)
+**Individual Health (mental and physical)** ($\alpha < 0$ and $\beta < 0 $ -> away from zero)
 
-**Individual Health (mental and physical)** 
+Individual health - both mental and physical - would likely be related to less crime. The healthier you are, the more mental and physical resources you have to solve problems in ways that do not necessitate committing a crime. The direction of the relationship to arrest or conviction rates is fuzzer but one could imagine that communities that have a focus on health may tend to be less punitive. 
 
-Individual health - both mental and physical - would likely be related to less crime. The healthier you are, the more mental and physical resources you have to solve problems in ways that do not necessitate committing a crime. One would expect this factor to be positively related to wages but negatively related to percent minorities (racism has negative impacts on health). The direction of the relationship to arrest or conviction rates is unclear. The direction of the relationship to density could go either way - people in cities may have access to better and more accessible health care, but live in a more polluted environment. Thus, one would guess that the bias would be away from zero (positive relationship to wages * negative relationship to percent minority * negative relationship to crime = positive). This could have elevated the quantification of our relationships above. Could better individual health be the hidden variable that is influencing our relationship to federal wages (our proxy for cost of living)? 
+**Community Health** ($\alpha < 0$ and $\beta < 0 $ -> away from zero)
 
-**Community Health**
+Community health is about the cohesiveness of a community. If you have good supports in your community, you would be less likely to commit crime. This factor would probably be inversely related to arrest and conviction rates, since a more loving, cohesive community may be less likely to turn to punishment. 
 
-Community health is about the cohesiveness of a community. If you have good supports in your community, you would be less likely to commit crime. The relationship to wages is unclear - communities at many income levels can have loving, supportive relationships. It is unclear what the relationship would be to percent minorities. This factor would probably be inversely related to arrest and conviction rates, since a more loving, cohesive community may be less likely to turn to punishment. Thus, one would guess that the bias would be towards zero (negative relationship to arrest rate * negative relationship to conviction rate * negative relationship to crime = negative).
+**Inequality** ($\alpha > 0$ and $\beta < 0 $ -> towards zero)
 
-**Inequality** 
+We only had measures of average wage by sector in each county. We don't have information about the distribution within and across these sectors. With more inequality, one would expect to see more crime - more anger & therefore reason to commit crime combined with greater levels of deprivation & need to commit crime would naturally lead to more crime. A more egalitarian society may have less punitive practice, since people would see each other as closer to their own group. This can help humanize other people and make it harder to commit cruelties. 
 
-We only had measures of average wage by sector in each county. We don't have information about the distribution within and across these sectors. With more inequality, one would expect to see more crime - more anger & therefore reason to commit crime combined with greater levels of deprivation & need to commit crime would naturally lead to more crime. The direction of the relationship between inequality and any of our independent variables in our final model is unclear - thus it is difficult to tell what direction this bias would be in. 
+Overall, most of these omitted variables likely inflated our estimate of the relationship between crime rate and these criminal justice policies. 
+
+What about our targeted economic policy variables? We were hesitant about making any causal inferences regarding these variables since we identified many variables that could be biasing the effect.
+
+- $\alpha$ = correlation between the omitted variable and `crmrte` 
+- $\beta$ = correlation between the omitted variable and wage variables (e.g., `wtrd`)
+
+**Unemployment** ($\alpha > 0$ and $\beta > 0$ -> away from zero)
+Unemployment rate is likely positively related to crime rate (so $\alpha > 0$), people in need are more prone to commit crimes. There has been mixed evidence around increases in minimum wage and unemployment, however many people believe that unemployment and wage increases are positively correlated so we will make that assumption here (so $\beta > 0$). 
+
+**Education levels of the populace** ($\alpha < 0$ and $\beta > 0$ -> towards zero)
+
+One would predict that education is negatively related to crime - the more educated, the less crime one would expect to commit (so $\alpha < 0$). The relationship between education levels and wages is likely positive, since those who are more educated often make more money and also have the funds to then pay for their own or their children's education. 
+
+**Public works & investments** ($\alpha < 0$ and $\beta > 0$ -> towards zero)
+
+One would predict that, like education, the relationship between and public works and investments with crime would be negative (so $\alpha < 0$). More nonprofits and community organizations could strengthen ties in communities, thus lowering crime rates. A community with higher wages would have more funds to put towards these, so beta is probably positive. 
+
+**Individual Health (mental and physical)** ($\alpha < 0$ and $\beta > 0 $ -> towards zero)
+
+Individual health - both mental and physical - would likely be related to less crime. The healthier you are, the more mental and physical resources you have to solve problems in ways that do not necessitate committing a crime. The direction of the relationship to a community's wages is probably positive since more money means more funds to invest in health. 
+
+**Community Health** ($\alpha < 0$ and $\beta > 0 $ -> towards zero)
+
+Community health is about the cohesiveness of a community. If you have good supports in your community, you would be less likely to commit crime. A community that is cohesive would likely be interested in policies that strengthen others' status in that community (like increasing the minimum wage), so the relationshp woule likely be positive. 
+
+**Inequality** ($\alpha > 0$ and $\beta < 0 $ -> away from zero)
+
+With more inequality, one would expect to see more crime - more anger & therefore reason to commit crime combined with greater levels of deprivation & need to commit crime would naturally lead to more crime. Places with higher minimum wages probably see less inequality, so the relationship is inversed.
+
+Overall, most of these omitted variables likely reduced our estimate of the relationship between crime rate and our wage variables. This was suspected since we were attempting to use these wages a (very) flawed proxy for the economic policies of main interest in this analysis. 
 
 # Conclusion
 
 Based on our dataset, our analyses suggest that acting on crime deterrents within the criminal justice system (like arrests and convictions) is important policy efforts to take when it comes to preventing crime. In fact, for a 10% rise in the probability of arrests and convictions individually, the negative impact on crime rate hovers between 5-7% for the arrests and between 4-5% for convictions.  Helpful follow-ups in this investigation would be to leverage variation across time and possibly test for large changes in policy that would help for example in designing a regression discontinuity model. However, our findings can be used to hone in on future policy changes that can be evaluated with more rigorous causal analyses. 
 
-It would also be helpful to follow-up on this investigation with the addition of health variables. These omitted variables could have affected the relationships tested here. Specifically, areas with higher cost of living may have people living there with better health care and less stress, which would make them healthier and give them less reason to commit crimes. 
+Even though we could not find much support for the importance of economic policy variables to prevent crimes, measures to improve living conditions locally should not detract from efforts on the criminal justice system front. Targeting economic development policies that can bring higher wages and improve the quality of life in a region is likely important to deter crime. We did find that the wages of federal employees appear positively correlated with crime - one would imagine that counties would not intend to enact policies that depress wages in their region. There are likely hidden or unmeasured factors (such as health, inequality, corruption, or high cost of living without investment back into the community) that could be driving this effect. It would also be helpful to follow-up on this investigation with the addition of the omitted variables listed above. We see that inclusion of these would have reduced our estimates of the effects of crime variables and increased the estimates for wage variables. Other dynamics could also evolve that could be interesting in terms of other factors involved in crime. Overall, omitted variable bias reduced the strength of our claims overall. 
 
-Other factors outside of policy -- such as the distribution of minorities -- are also important when it comes to crime. Communities with higher rates of either may require additional resources or different types of policies to prevent crime. For example, if the actual number of crimes is different from the number of reported crimes -- for example, in a community with a lot of racial conflict where some groups over-report others to the police -- we would see elevated measures of crime. If policies aim to reduce actual crime (rather than just reported crime), we would need more nuanced measures to track these and would need to turn towards more nuanced ways to address this (perhaps through strengthening group cohesiveness and hosting workshops to reduce racism). 
-
-We found that communities with higher density of minorities have higher rates of crime. More follow-up would be needed to investigate mediators of this effect - such as racism, which could lead to higher rates of reported crime (even when holding actual crime constant) - but efforts towards community investments such as those related to the economic development efforts could also be used to fight crime. 
+It is also clear that real life variations in these counties related to there being many suspected outliers - we did not remove these, as they were likely edge cases rather than erroneous data. We did not wish to fit the data to the model, but rather see what real life events we could capture. Thus, any policies should take the local context into consideration. A stronger follow-up study would include these within-county factors in the model to produce more robust causal findings. The distribution of minorities is a good example of a variable that is not (at least ethically) under the influence of a politician, but must be accepted as a factor inherent to a community. Communities with higher rates of minorities or crime may require additional resources or different types of policies to prevent crime. For example, if the actual number of crimes is different from the number of reported crimes -- for example, in a community with a lot of racial conflict where some groups over-report others to the police -- we would see elevated measures of crime. If policies aim to reduce actual crime (rather than just reported crime), we would need more nuanced measures to track these and would need to turn towards more nuanced ways to address this (perhaps through strengthening group cohesiveness and hosting workshops to reduce racism). We found that communities with higher density of minorities have higher rates of crime. More follow-up would be needed to investigate mediators of this effect - such as racism, which could lead to higher rates of reported crime (even when holding actual crime constant) - but efforts towards community investments such as those related to the economic development efforts could also be used to fight crime. Perhaps with research using more appropriate economic variables, we could tease out whether providing more assistance in economic development to these regions could help in reducing crime. 
 
 Based on our findings alone, policy recommendations should be focused on the criminal justice system. Policies could include include improved training and hiring of criminal justice staff, that could improve the ratio of arrest and convictions to crimes. Making sure that those who commit crimes are caught seems to be important in deterring crime - whether by keeping people off the streets, rehabilitating them, or scaring others away from committing crimes 
-
-Even though we could not find much support for the importance of economic policy variables to prevent crimes, measures to improve living conditions locally should not detract from efforts on the criminal justice system front. Targeting economic development policies that can bring higher wages and improve the quality of life in a region is likely important to deter crime. We did find that the wages of federal employees appear positively correlated with crime - one would imagine that counties would not intend to enact policies that depress wages in their region. There are likely hidden or unmeasured factors (such as health, inequality, corruption, or high cost of living without investment back into the community) that could be driving this effect. 
 
 Both of these streams (criminal and economic policies) could be folded under the umbrella of investing more in one's community. It is not enough to punish and deter - one needs to also get at the root causes of crime and why someone may be compelled to commit a crime in the first place. The fact that crime is higher with high rates of minorities suggests that the picture is more complicated than it may seem when looking at crime policy variables. Are there elements of community cohesion that could be improved to help reduce crime? Or efforts to mitigate the systemic effects of racism? Perhaps more crimes are simply reported in those areas - so the elevate numbers are not truly a reflection of actual crime committed but rather enhanced surveillance. 
 
