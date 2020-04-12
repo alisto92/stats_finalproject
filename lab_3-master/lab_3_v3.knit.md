@@ -5,9 +5,7 @@ date: "Due: 4/14/2020"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+
 
 # Introduction
 
@@ -143,7 +141,8 @@ The following variables identify which region of the state each county is in, wi
 
 ## Data Cleaning & Exploratory Data Analysis
 
-```{r, message=FALSE}
+
+```r
 # import libraries 
 library(tidyverse) # for data import, manipulation, viz
 library(corrplot) # for correlation matix
@@ -157,7 +156,8 @@ library(grid) # to arrange ggplot figures into a grid
 library(gridExtra) # to arrange ggplot figures into a grid 
 ```
 
-```{r, message=FALSE}
+
+```r
 # import data
 data <- read_csv("crime_v2.csv", n_max = 91)
 ```
@@ -166,30 +166,63 @@ data <- read_csv("crime_v2.csv", n_max = 91)
 
 We have 91 observations and 25 columns in the raw data. All 25 columns were read in as numeric columns. 
 
-```{r}
+
+```r
 print(paste("Number of records:", dim(data)[1]))
+```
+
+```
+## [1] "Number of records: 91"
+```
+
+```r
 print(paste("Number of variables:", dim(data)[2]))
+```
+
+```
+## [1] "Number of variables: 25"
 ```
 
 ##### The Where & When of these data 
 
 It looks like we have 1 observation for each of the counties -- except for county #193. We noticed that these rows appear to be exact duplicates. 
 
-```{r}
+
+```r
 data %>% filter(county == 193)
+```
+
+```
+## # A tibble: 2 x 25
+##   county  year crmrte prbarr prbconv prbpris avgsen   polpc density taxpc
+##    <dbl> <dbl>  <dbl>  <dbl>   <dbl>   <dbl>  <dbl>   <dbl>   <dbl> <dbl>
+## 1    193    87 0.0235  0.266   0.589   0.423   5.86 0.00118   0.814  28.5
+## 2    193    87 0.0235  0.266   0.589   0.423   5.86 0.00118   0.814  28.5
+## # … with 15 more variables: west <dbl>, central <dbl>, urban <dbl>,
+## #   pctmin80 <dbl>, wcon <dbl>, wtuc <dbl>, wtrd <dbl>, wfir <dbl>,
+## #   wser <dbl>, wmfg <dbl>, wfed <dbl>, wsta <dbl>, wloc <dbl>, mix <dbl>,
+## #   pctymle <dbl>
 ```
 
 It appears as though these county IDs could be county FIPS codes (https://www.lib.ncsu.edu/gis/countfips). We will not make such a strong assumption, however we can try to supplement some of our data quality checks to see if anything seems to align between the IDs and FIPS codes. 
 
 The `year` column is an expected constant (1987). We can drop this column in future data processing steps. 
 
-```{r}
+
+```r
 table(data$year, useNA = "always")
+```
+
+```
+## 
+##   87 <NA> 
+##   91    0
 ```
 
 We create a new data frame dropping our superfluous column (`year`) and row (duplicate of county 193). Now we have 90 rows and 24 numeric variables. Since we have one row per county, we appear to be missing information from 10 of the 100 counties in North Carolina.
 
-```{r}
+
+```r
 data2 <- data %>% distinct() %>% select(-c("year", "polpc"))
 ```
 
@@ -201,18 +234,77 @@ However, that we appear to have a few values that are extremely high based on ma
 
 Note that `pctmin80` values are not in the [0,1] scale despite being a percentage of total metric. The scale for this variable does not match the other percentage metric in our data set (`pctymle`) and will be adjusted to facilitate coefficient interpretation.
 
-```{r}
+
+```r
 #generate skim table
 data2_skim <- skim(data2)
 data2_skim
 ```
 
-```{r}
+```
+## Skim summary statistics
+##  n obs: 90 
+##  n variables: 23 
+## 
+## ── Variable type:numeric ──────────────────────────────────────────────────────────────────────────
+##  variable missing complete  n    mean      sd         p0     p25     p50
+##    avgsen       0       90 90   9.69    2.83      5.38     7.38    9.11 
+##   central       0       90 90   0.38    0.49      0        0       0    
+##    county       0       90 90 100.6    58.32      1       51.5   103    
+##    crmrte       0       90 90   0.034   0.019     0.0055   0.021   0.03 
+##   density       0       90 90   1.44    1.52  2e-05        0.55    0.98 
+##       mix       0       90 90   0.13    0.082     0.02     0.081   0.1  
+##  pctmin80       0       90 90  25.71   16.98      1.28    10.02   24.85 
+##   pctymle       0       90 90   0.084   0.023     0.062    0.074   0.078
+##    prbarr       0       90 90   0.3     0.14      0.093    0.2     0.27 
+##   prbconv       0       90 90   0.55    0.35      0.068    0.34    0.45 
+##   prbpris       0       90 90   0.41    0.081     0.15     0.36    0.42 
+##     taxpc       0       90 90  38.16   13.11     25.69    30.73   34.92 
+##     urban       0       90 90   0.089   0.29      0        0       0    
+##      wcon       0       90 90 285.35   47.75    193.64   250.75  281.16 
+##      west       0       90 90   0.24    0.43      0        0       0    
+##      wfed       0       90 90 442.62   59.95    326.1    398.78  448.85 
+##      wfir       0       90 90 321.62   54       170.94   285.56  317.13 
+##      wloc       0       90 90 312.28   28.13    239.17   297.23  307.65 
+##      wmfg       0       90 90 336.03   88.23    157.41   288.6   321.05 
+##      wser       0       90 90 275.34  207.4     133.04   229.34  253.12 
+##      wsta       0       90 90 357.74   43.29    258.33   329.27  358.4  
+##      wtrd       0       90 90 210.92   33.87    154.21   190.71  202.99 
+##      wtuc       0       90 90 410.91   77.36    187.62   374.33  404.78 
+##      p75     p100     hist
+##   11.47    20.7   ▆▇▅▅▂▁▁▁
+##    1        1     ▇▁▁▁▁▁▁▅
+##  150.5    197     ▇▆▇▇▆▇▇▇
+##    0.04     0.099 ▆▇▇▃▂▁▁▁
+##    1.57     8.83  ▇▃▁▁▁▁▁▁
+##    0.15     0.47  ▃▇▂▁▁▁▁▁
+##   38.18    64.35  ▇▅▅▅▆▃▁▂
+##    0.084    0.25  ▇▁▁▁▁▁▁▁
+##    0.34     1.09  ▆▇▃▁▁▁▁▁
+##    0.59     2.12  ▃▇▂▁▁▁▁▁
+##    0.46     0.6   ▁▁▂▅▇▇▂▁
+##   41.01   119.76  ▇▃▁▁▁▁▁▁
+##    0        1     ▇▁▁▁▁▁▁▁
+##  314.98   436.77  ▂▇▇▇▅▃▁▁
+##    0        1     ▇▁▁▁▁▁▁▂
+##  478.26   597.95  ▃▅▅▇▆▃▂▁
+##  342.63   509.47  ▁▁▅▇▃▁▁▁
+##  328.78   388.09  ▁▁▃▇▅▂▁▁
+##  359.89   646.85  ▁▃▇▅▁▁▁▁
+##  277.65  2177.07  ▇▁▁▁▁▁▁▁
+##  383.15   499.59  ▂▃▆▇▆▂▁▁
+##  224.28   354.68  ▃▇▆▂▂▁▁▁
+##  440.68   613.23  ▁▁▂▆▇▂▂▁
+```
+
+
+```r
 # convert % minority variable
 data2$pctmin80 <- data2$pctmin80 * 0.01
 ```
 
-```{r}
+
+```r
 # save clean data file 
 save(data2, file = "data_clean.rda")
 ```
@@ -225,7 +317,8 @@ From the histogram, we can see that `crmrte` is unimodal and approximately norma
 
 From our boxplot we can see that most values are between 0.02 - 0.04, however we do have a range of values including some that are close to 0.10. We don't appear to have any spurious values. 
 
-```{r, fig.width = 6, fig.align = "center"}
+
+```r
 p1 <- ggplot(data2, aes(crmrte)) +
   geom_histogram(bins = 35) +
   theme_minimal() +
@@ -242,6 +335,8 @@ p2 <- ggplot(data2, aes(y = crmrte)) +
 grid.arrange(p1, p2, ncol = 2, top = "Candidate Dependent Variable: Crime Rate")
 ```
 
+<img src="lab_3_v3_files/figure-html/unnamed-chunk-10-1.png" width="576" style="display: block; margin: auto;" />
+
 ### Independent Variables 
 
 #### Actionable Variables
@@ -250,7 +345,8 @@ grid.arrange(p1, p2, ncol = 2, top = "Candidate Dependent Variable: Crime Rate")
 
 We can see that we have different distributions for the 3 core criminal justice policy variables (`prbarr`, `prbconv`, `prbpris`), but that they all could be considered unimodal, with different levels of skew. 
 
-```{r}
+
+```r
 # format data for subplots 
 data_cj_long <- data2 %>% select(prbarr, prbconv, prbpris) %>%
   gather(key = var, value = value)
@@ -259,7 +355,8 @@ data_cj_long <- data2 %>% select(prbarr, prbconv, prbpris) %>%
 data_cj_long$var <- factor(data_cj_long$var, labels = c("Prob Arrest", "Prob Convicted", "Prob Sentenced"))
 ```
 
-```{r}
+
+```r
 # plot hist subplots
 ggplot(data_cj_long, aes(value)) +
   geom_histogram(bins = 50) +
@@ -268,9 +365,12 @@ ggplot(data_cj_long, aes(value)) +
   ggtitle("Histogram of Criminal Justice Policy Variables: Assertiveness Variables")
 ```
 
+<img src="lab_3_v3_files/figure-html/unnamed-chunk-12-1.png" width="672" />
+
 From our boxplots we can see that we have some extreme values for conviction rate, with multiple counties having a rate above 1. They imply that for each arrest, there could be multiple convictions - one county has over 2 convictions for every arrest. Only 1 county has more than 1 arrest per crime committed - most counties in fact have a much lower rate (and only put someone under arrest for ~one-quarter of crimes). When it comes to sentencing, counties show a much lower spread and cluster around 1 conviction resulting in a prison sentence for every 1 conviction that does not. 
 
-```{r}
+
+```r
 # plot boxplot subplots 
 ggplot(data_cj_long, aes(x = var, y = value)) +
   geom_boxplot() +
@@ -280,15 +380,29 @@ ggplot(data_cj_long, aes(x = var, y = value)) +
   ggtitle("Boxplot of Criminal Justice Policy Variables: Assertiveness Variables")
 ```
 
+<img src="lab_3_v3_files/figure-html/unnamed-chunk-13-1.png" width="672" />
+
 Which county had the highest conviction rate? This is a county in central North Carolina. It has the highest percentage of minorities. It also has the maximum wages in the service industry. 
 
-```{r}
+
+```r
 data2 %>% filter(prbconv == max(prbconv))
+```
+
+```
+## # A tibble: 1 x 23
+##   county crmrte prbarr prbconv prbpris avgsen density taxpc  west central
+##    <dbl>  <dbl>  <dbl>   <dbl>   <dbl>  <dbl>   <dbl> <dbl> <dbl>   <dbl>
+## 1    185 0.0109  0.195    2.12   0.443   5.38   0.389  40.8     0       1
+## # … with 13 more variables: urban <dbl>, pctmin80 <dbl>, wcon <dbl>,
+## #   wtuc <dbl>, wtrd <dbl>, wfir <dbl>, wser <dbl>, wmfg <dbl>,
+## #   wfed <dbl>, wsta <dbl>, wloc <dbl>, mix <dbl>, pctymle <dbl>
 ```
 
 The fact that the conviction rate is so high seems odd for county #185. The other measures of assertiveness (for arrest and sentencing) seem close to their medians. 
 
-```{r}
+
+```r
 data_prb <- data2 %>% as_tibble() %>% select(prbarr, prbconv, prbpris) %>% summarise_all(median) %>% 
   gather(var, value) %>% mutate(Group = "Median")
 
@@ -307,14 +421,16 @@ ggplot(data = prbs, aes(x = var, y = value, color = Group)) +
   ylab('Assertiveness') +
   theme_minimal() +
   ggtitle("Comparing Criminal Justice Assertiveness between County 185 and Other Counties")
-
 ```
+
+<img src="lab_3_v3_files/figure-html/unnamed-chunk-15-1.png" width="672" />
 
 According to the FIPS codes, #185 stands for Warren County. During the 1980s, its citizens conducted a series of demonstrations against a newly built landfill (https://en.wikipedia.org/wiki/Warren_County_PCB_Landfill), which led to multiple arrests and convictions associated with disobedience (not crime). This was an extraordinary event outside the process of interest, so we will remove this county.
 
 Average sentence length follows an approximately normal distribution with one extremely high value, corresponding to Madison County (according to the FIPS code). 
 
-```{r, fig.width = 6, fig.align = "center"}
+
+```r
 p1 <- ggplot(data2, aes(avgsen)) +
   geom_histogram(bins = 35) +
   theme_minimal() +
@@ -331,11 +447,25 @@ p2 <- ggplot(data2, aes(y = avgsen)) +
 grid.arrange(p1, p2, ncol = 2, top = "Criminal Justice Indicator: Average Sentence")
 ```
 
+<img src="lab_3_v3_files/figure-html/unnamed-chunk-16-1.png" width="576" style="display: block; margin: auto;" />
+
 This western county is the home to the state's oldest jail, still in operation in 1987 (https://mountainx.com/news/murky-future-for-madisons-historic-jailhouse/). The fact that this county is in one of the less prosperous areas of the USA and home to this jail could explain its average sentence length. We retain this outlier in the data since it probably doesn't indicate spurious data and would be an interesting edge case to study.  
 
-```{r}
+
+```r
 # show counties with highest average sentence
 data2 %>% arrange(desc(avgsen)) %>% select(county, avgsen) %>% head(5)
+```
+
+```
+## # A tibble: 5 x 2
+##   county avgsen
+##    <dbl>  <dbl>
+## 1    115   20.7
+## 2     41   17.4
+## 3    127   16.0
+## 4     99   14.8
+## 5    149   14.6
 ```
 
 ##### Economic Policy
@@ -348,7 +478,8 @@ Wholesale & Retail Trade wages are closest to the minimum wage - suggesting that
 
 Another aspect of wage our candidate could influence are state and local employee wages. Raising the wages of government employees could be a tactic for reducing crime (although it would also cut into budgets for other crime-cutting efforts and may not be ideal). We will include these in our models in order to test this policy, but implementation may be challenging. 
 
-```{r}
+
+```r
 # format data for subplots 
 data_ep_long <- data2 %>% 
   select(wcon, wtuc, wtrd, wfir, wser, wmfg, wfed, wsta, wloc) %>%
@@ -368,7 +499,8 @@ data_ep_long$var <- factor(data_ep_long$var,
                                       "Local/State Emp"))
 ```
 
-```{r}
+
+```r
 # plot hist subplots
 ggplot(data_ep_long, aes(value)) +
   geom_histogram(bins = 50) +
@@ -377,10 +509,12 @@ ggplot(data_ep_long, aes(value)) +
   ggtitle("Histogram of Economic Policy Variables: Wages by Sector") +
   geom_vline(aes(xintercept = 134, color = "red")) +
   theme(legend.position = "none")
-
 ```
 
-```{r}
+<img src="lab_3_v3_files/figure-html/unnamed-chunk-19-1.png" width="672" />
+
+
+```r
 # plot boxplot subplots 
 ggplot(data_ep_long, aes(x = var, y = value)) +
   geom_boxplot() +
@@ -391,12 +525,14 @@ ggplot(data_ep_long, aes(x = var, y = value)) +
   ggtitle("Boxplot of Economic Policy Variables: Wages by Sector")+
   geom_hline(aes(yintercept = 134, color = "red")) +
   theme(legend.position = "none")
-
 ```
+
+<img src="lab_3_v3_files/figure-html/unnamed-chunk-20-1.png" width="672" />
 
 Another variable influenced by economic policy is tax revenue per capita. The distribution of `taxpc` is skewed. This distribution coupled with the fact that `taxpc` is measured in dollars makes the variable a top candidate for a log transformation.
 
-```{r, fig.width = 6, fig.align = "center"}
+
+```r
 # plot histogram & boxplot
 tax1 <- ggplot(data2, aes(taxpc)) +
   geom_histogram(bins = 25) +
@@ -414,11 +550,24 @@ tax2 <- ggplot(data2, aes(y = taxpc)) +
 grid.arrange(tax1, tax2, ncol = 2, top = "Tax Revenue Per Capita")
 ```
 
+<img src="lab_3_v3_files/figure-html/unnamed-chunk-21-1.png" width="576" style="display: block; margin: auto;" />
+
 We appear to have an extreme value at \$119.76, which is for county #55. This is likely Dare County according to its FIPS code, a small island that is a popular vacation spot. 
 
-```{r}
+
+```r
 # filter for only #55
 data2 %>% filter(taxpc == max(taxpc))
+```
+
+```
+## # A tibble: 1 x 23
+##   county crmrte prbarr prbconv prbpris avgsen density taxpc  west central
+##    <dbl>  <dbl>  <dbl>   <dbl>   <dbl>  <dbl>   <dbl> <dbl> <dbl>   <dbl>
+## 1     55 0.0790  0.225   0.208   0.304   13.6   0.512  120.     0       0
+## # … with 13 more variables: urban <dbl>, pctmin80 <dbl>, wcon <dbl>,
+## #   wtuc <dbl>, wtrd <dbl>, wfir <dbl>, wser <dbl>, wmfg <dbl>,
+## #   wfed <dbl>, wsta <dbl>, wloc <dbl>, mix <dbl>, pctymle <dbl>
 ```
 
 With such high tax revenue, one would expect that this county had higher wages. This county has federal employee wages well below North Carolina's median. It is also below the median for:
@@ -430,7 +579,8 @@ With such high tax revenue, one would expect that this county had higher wages. 
 
 Wealthier people are more likely to have a vacation residence and would probably contribute to higher tax revenue. Given that this row probably does not have a data quality issue but rather is an interesting edge case, we will retain it.
 
-```{r}
+
+```r
 # reformat data for plotting
 data_tax <- data2 %>% as_tibble() %>% select(taxpc, wcon, wtuc, wtrd, wfir, wser, wmfg, wfed, wsta, wloc) %>% summarise_all(median) %>% 
   gather(var, value) %>% mutate(Group = "Median")
@@ -445,16 +595,17 @@ ggplot(data = taxes, aes(x = var, y = value, color = Group)) +
   ylab('$') +
   theme_minimal() +
   ggtitle("Comparing Tax Revenue and Wages between County 55 and Other Counties")
-
 ```
+
+<img src="lab_3_v3_files/figure-html/unnamed-chunk-23-1.png" width="672" />
 
 
 #### Contextual Variables
 
 ##### Types of Crime 
 
-```{r, fig.align = "center"}
 
+```r
 # plot hist
 p5 <- ggplot(data2, aes(mix)) +
   geom_histogram(bins = 35) +
@@ -474,11 +625,14 @@ p6 <- ggplot(data2, aes(y = mix)) +
 grid.arrange(p5, p6, ncol = 2,  top = "Contextual Variables: Type of Crime")
 ```
 
+<img src="lab_3_v3_files/figure-html/unnamed-chunk-24-1.png" width="672" style="display: block; margin: auto;" />
+
 ##### Demographics 
 
 The distributions for `density` and `pctymle` approximate a normal distribution but the that of `pctmin80` approximates a uniform distribution. Minorities seems to be present in most counties on a similar properties.
 
-```{r, fig.align = "center"}
+
+```r
 # hist
 p7 <- ggplot(data2, aes(density)) +
   geom_histogram(bins = 35) +
@@ -523,40 +677,77 @@ p12 <- ggplot(data2, aes(y = pctymle)) +
 grid.arrange(p7, p8, p9, p10, p11, p12, ncol = 2, nrow = 3,  top = "Contextual Variables: Demographics")
 ```
 
+<img src="lab_3_v3_files/figure-html/unnamed-chunk-25-1.png" width="672" style="display: block; margin: auto;" />
+
 In terms of density outliers, we discovered that the county #119 has the highest density. This county probably is Mecklenburg County, home to city of Charlotte (the state capital and one of the more populated cities). 
 
-```{r}
+
+```r
 data2 %>% filter(density == max(density))
+```
+
+```
+## # A tibble: 1 x 23
+##   county crmrte prbarr prbconv prbpris avgsen density taxpc  west central
+##    <dbl>  <dbl>  <dbl>   <dbl>   <dbl>  <dbl>   <dbl> <dbl> <dbl>   <dbl>
+## 1    119 0.0990  0.149   0.348   0.486   7.13    8.83  75.7     0       1
+## # … with 13 more variables: urban <dbl>, pctmin80 <dbl>, wcon <dbl>,
+## #   wtuc <dbl>, wtrd <dbl>, wfir <dbl>, wser <dbl>, wmfg <dbl>,
+## #   wfed <dbl>, wsta <dbl>, wloc <dbl>, mix <dbl>, pctymle <dbl>
 ```
 
 The smallest county would correspond to Swain County, a very rural county in the Western part of the state. It straddles two national parks/forests, which would explain why it has low density. 
 
-```{r}
+
+```r
 data2 %>% filter(density == min(density))
+```
+
+```
+## # A tibble: 1 x 23
+##   county crmrte prbarr prbconv prbpris avgsen density taxpc  west central
+##    <dbl>  <dbl>  <dbl>   <dbl>   <dbl>  <dbl>   <dbl> <dbl> <dbl>   <dbl>
+## 1    173 0.0140  0.530   0.328   0.150   6.64 2.03e-5  37.7     1       0
+## # … with 13 more variables: urban <dbl>, pctmin80 <dbl>, wcon <dbl>,
+## #   wtuc <dbl>, wtrd <dbl>, wfir <dbl>, wser <dbl>, wmfg <dbl>,
+## #   wfed <dbl>, wsta <dbl>, wloc <dbl>, mix <dbl>, pctymle <dbl>
 ```
 
 We retain these rows - which don't have data quality issues and are edge cases of interest. 
 
 County #133 (Onslow County based on FIPS code) is the main outlier for `pctymle`. The deviation in percent of young males could be due to Camp Lejeune, a marine corps base. Most recruits are young males and so this base would impact the percent of young males in the population, especially because the density of Onslow county is low. Contrary to our expected relationship, the percent of young males would have a negative impact on crime because recruits would most likely not commit crimes. However, this is not the only county in North Carolina with a military base, so we will keep this observation.
 
-```{r}
+
+```r
 data2 %>% filter(pctymle == max(pctymle))
+```
+
+```
+## # A tibble: 1 x 23
+##   county crmrte prbarr prbconv prbpris avgsen density taxpc  west central
+##    <dbl>  <dbl>  <dbl>   <dbl>   <dbl>  <dbl>   <dbl> <dbl> <dbl>   <dbl>
+## 1    133 0.0551  0.267   0.272   0.335   8.99    1.65  27.5     0       0
+## # … with 13 more variables: urban <dbl>, pctmin80 <dbl>, wcon <dbl>,
+## #   wtuc <dbl>, wtrd <dbl>, wfir <dbl>, wser <dbl>, wmfg <dbl>,
+## #   wfed <dbl>, wsta <dbl>, wloc <dbl>, mix <dbl>, pctymle <dbl>
 ```
 
 ##### Geography
 
 We were given 3 variables to track geography. These are dummy variables that code for west versus central versus east and urban versus rural. 
 
-```{r}
+
+```r
 # create new east variable
 geo_supp <- data2 %>% mutate(east = ifelse(west == 0 & central == 0, 1, 0), rural = ifelse(urban == 0, 1, 0))
 ```
 
-Eastern counties represent `` `r paste0(as.character(round(100*sum(geo_supp$east)/90, 2)), "%")` `` of the 89 counties; central `` `r paste0(as.character(round(100*sum(geo_supp$central)/90, 2)), "%")` ``; and western `` `r paste0(as.character(round(100*sum(geo_supp$west)/90, 2)), "%")` ``. These sum to 100% so this dummy variable has likely been correctly coded. 
+Eastern counties represent `` 38.89% `` of the 89 counties; central `` 37.78% ``; and western `` 24.44% ``. These sum to 100% so this dummy variable has likely been correctly coded. 
 
-Urban counties represent `` `r paste0(as.character(round(100*sum(geo_supp$urban)/90, 2)), "%")` `` of the 89 counties. Rural counties represent `` `r paste0(as.character(round(100*sum(geo_supp$rural)/90, 2)), "%")` ``. These also sum to 100%.
+Urban counties represent `` 8.89% `` of the 89 counties. Rural counties represent `` 91.11% ``. These also sum to 100%.
 
-```{r}
+
+```r
 # reformat data for plotting
 geo_long <- geo_supp %>%
   mutate_at(vars(west, central, east, rural, urban), ~ ifelse(. == 0, NA, .)) %>%
@@ -567,7 +758,8 @@ geo_long <- geo_supp %>%
 
 We can see that the vast number of counties are rural across central, western, and eastern counties. Central counties have the largest share of urban geographies. 
 
-```{r}
+
+```r
 # plot barplots
 ggplot(geo_long, aes(x = location, fill = type)) +
   geom_bar(position = "fill") +
@@ -576,14 +768,21 @@ ggplot(geo_long, aes(x = location, fill = type)) +
   xlab("")
 ```
 
+<img src="lab_3_v3_files/figure-html/unnamed-chunk-31-1.png" width="672" />
+
 As mentioned in our introduction to the variables, we will prioritize `west` in our model. It has the least number of rural counties and represents the least number of counties overall.
 
 ### Relationships between Variables
 
-```{r}
+
+```r
 # remove row with erroneous values (#185) before investigating relationships 
 data2 <- data2 %>% filter(county != 185)
 print(paste("Number of records:", dim(data2)[1]))
+```
+
+```
+## [1] "Number of records: 89"
 ```
 
 This is a correlation matrix of all of our variables, using Spearman's due to the fact that not all variables follow a normal distribution. One would expect variables within each of the above groups to be correlated to each other and we can see this is generally the case. 
@@ -598,17 +797,21 @@ As expected, population density has a strong positive relationship with crime ra
 
 All wages as well as `taxpc` are positively correlated to each other. This behavior is expected as wages and taxable income are both determined by economic factors. Similarly as above, we will need to pay close attention as the joint impact of including multiple variables that are highly correlated in models. 
 
-```{r}
+
+```r
 # omit county to create correlation matrix 
 data_corr <- data2 %>% select(-county) 
 # create matrix of correlations
 matrix_corr <- round(cor(data_corr, method = "spearman"), 1)
 ```
 
-```{r}
+
+```r
 # visualize correlation matrix 
 corrplot(matrix_corr, type = "lower", method = "ellipse", order = "alphabet")
 ```
+
+<img src="lab_3_v3_files/figure-html/unnamed-chunk-34-1.png" width="672" />
 
 ## Model Results
 
@@ -637,7 +840,8 @@ We log transformed crime policy measures and `crmrte` to improve our model fit a
 
 In the previous section, we found that `prbarr` and `prbconv`have a strong negative correlation with `crmrte`, but `prbpris` and `avgsen` don't.  With that in mind, in the table below we compare the output of a model featuring only arrest and conviction rates with the output of a model featuring all the crime policy variables.
 
-```{r}
+
+```r
 # create models
 mod1_1 <- lm(log(crmrte) ~ log(prbarr) + log(prbconv) + log(prbpris) + log(avgsen), data = data2)
 mod1_2 <- lm(log(crmrte) ~ log(prbarr) + log(prbconv) + log(prbpris) , data = data2)
@@ -659,7 +863,41 @@ stargazer(
   , notes = "Robust SE"
   , star.cutoffs = c(0.05, 0.01, 0.001)
 )
+```
 
+```
+## 
+## ========================================================================================
+##                                             Dependent variable:                         
+##                     --------------------------------------------------------------------
+##                                                 log(crmrte)                             
+##                              (1)                    (2)                    (3)          
+## ----------------------------------------------------------------------------------------
+## log(prbarr)               -0.728***              -0.728***              -0.730***       
+##                            (0.121)                (0.118)                (0.115)        
+##                                                                                         
+## log(prbconv)               -0.443**               -0.441**               -0.442**       
+##                            (0.151)                (0.144)                (0.140)        
+##                                                                                         
+## log(prbpris)                0.164                  0.160                                
+##                            (0.241)                (0.239)                               
+##                                                                                         
+## log(avgsen)                 0.033                                                       
+##                            (0.195)                                                      
+##                                                                                         
+## Constant                  -4.743***              -4.673***              -4.822***       
+##                            (0.525)                (0.289)                (0.176)        
+##                                                                                         
+## ----------------------------------------------------------------------------------------
+## BIC                         123.2                  118.8                  114.9         
+## Observations                  89                     89                     89          
+## R2                          0.405                  0.404                  0.400         
+## Adjusted R2                 0.376                  0.383                  0.386         
+## Residual Std. Error    0.428 (df = 84)        0.425 (df = 85)        0.424 (df = 86)    
+## F Statistic         14.271*** (df = 4; 84) 19.234*** (df = 3; 85) 28.671*** (df = 2; 86)
+## ========================================================================================
+## Note:                                                      *p<0.05; **p<0.01; ***p<0.001
+##                                                                                Robust SE
 ```
 
 The table above shows that approximately 38-40% of the variation in log(crime rate) can be explained by the criminal justice policy variables. Coefficients on log(`prbpris`)  and log(`avg_sen`) were not statistically significant in equation (1). Also note that excluding criminal justice indicators that are weakly related to crime - log(`av_sen`) in equation 2 and log(`av_sen`)/log(`prbpris`) in equation 3 - did not affect R2 nor changed the estimated coefficients on the criminal justice indicators that are strongly related to crime - log(`prbarr`) and log(`prbconv`) - in a material way. Finally, BIC is smaller for the most parsimonious model (equation 3). 
@@ -711,7 +949,8 @@ We decided to take the log of our wage variables to show the relationship betwee
 
 We can see that we have a fairly linear relationship between trade industry wages and crime. 
 
-```{r}
+
+```r
 ggplot(data = data2, aes(x = log(wtrd), y = log(crmrte))) +
   geom_point() +
   theme_minimal() +
@@ -720,9 +959,12 @@ ggplot(data = data2, aes(x = log(wtrd), y = log(crmrte))) +
   geom_smooth(method='lm', formula= y~x)
 ```
 
+<img src="lab_3_v3_files/figure-html/unnamed-chunk-36-1.png" width="672" />
+
 The relationship between the log of Service Wages and Crime Rate seems fairly linear as well, though there are some outliers that seems to have strong leverage on the relationship.
 
-```{r}
+
+```r
 ggplot(data = data2, aes(x = log(wser), log(crmrte))) +
   geom_point() +
   theme_minimal() +
@@ -731,8 +973,11 @@ ggplot(data = data2, aes(x = log(wser), log(crmrte))) +
   geom_smooth(method='lm', formula= y~x)
 ```
 
+<img src="lab_3_v3_files/figure-html/unnamed-chunk-37-1.png" width="672" />
+
 We can see that we have a relatively clear linear relationship between federal wages and crime. 
-```{r}
+
+```r
 ggplot(data = data2, aes(x = wfed, log(crmrte))) +
   geom_point() +
   theme_minimal() +
@@ -741,9 +986,12 @@ ggplot(data = data2, aes(x = wfed, log(crmrte))) +
   geom_smooth(method='lm', formula= y~x)
 ```
 
+<img src="lab_3_v3_files/figure-html/unnamed-chunk-38-1.png" width="672" />
+
 Log transforming `wfed` does not turn the relationship closer to a linear one. We will model `wfed` with a log transformation because we are utilizing the variable as a proxy for living expenses. Log transforming would make the interpretation of the variable's coefficient more intuitive.
 
-```{r}
+
+```r
 ggplot(data = data2, aes(x = log(wfed), log(crmrte))) +
   geom_point() +
   theme_minimal() +
@@ -752,9 +1000,12 @@ ggplot(data = data2, aes(x = log(wfed), log(crmrte))) +
   geom_smooth(method='lm', formula= y~x)
 ```
 
+<img src="lab_3_v3_files/figure-html/unnamed-chunk-39-1.png" width="672" />
+
 We can see that we do not have a very linear relationship between tax per capita and crime. Many of the points cluster together, leaving little variability with which to predict crime. In order to address this cluster, we also apply a log transformation to `taxpc`.
 
-```{r}
+
+```r
 ggplot(data = data2, aes(x = taxpc, log(crmrte))) +
   geom_point() +
   theme_minimal() +
@@ -763,9 +1014,12 @@ ggplot(data = data2, aes(x = taxpc, log(crmrte))) +
   geom_smooth(method='lm', formula= y~x)
 ```
 
+<img src="lab_3_v3_files/figure-html/unnamed-chunk-40-1.png" width="672" />
+
 The fit appears slightly improved after logging tax per capita but the data seems to still be clustered. The variable will be log-transformed because it is a covariate representing the money available to the government, and for that purpose the interpretation would be simpler.
 
-```{r}
+
+```r
 ggplot(data = data2, aes(x = log(taxpc), log(crmrte))) +
   geom_point() +
   theme_minimal() +
@@ -773,6 +1027,8 @@ ggplot(data = data2, aes(x = log(taxpc), log(crmrte))) +
   xlab("Log Tax Per Capita") + ylab("Log Crime Rate") +
   geom_smooth(method='lm', formula= y~x)
 ```
+
+<img src="lab_3_v3_files/figure-html/unnamed-chunk-41-1.png" width="672" />
 
 #### Discussion
 
@@ -785,7 +1041,8 @@ The elimination of wage variables from our models is advisable also according to
 After adding economic policy and context to the model, the estimated impact of criminal justice policies reduces slightly. The current set of model specifications suggest that, ceteris paribus, a 10% increase in `prbarr` would lead to a ~6% decrease in crime rate, while a 10% increase in `prbconv` would lead to a ~4% decrease in crime rate (vs. an estimated impact of ~7% and ~5% for the first set of models presented in the previous section). Either way, these figures still have important practical meaning, as a 4-6% change in crime rate may have material impact on people's lives.  
 
 
-```{r}
+
+```r
 mod2_1 <- lm(log(crmrte) ~ log(prbarr) + log(prbconv) + log(wtrd) + log(wser) + log(wloc) + log(wsta) + log(wfed) + log(taxpc), data = data2)
 # fit models
 #mod2_2 <- lm(log(crmrte) ~ log(prbarr) + log(prbconv) + log(wfed) + log(taxpc), data = data2)  # no economic policy variables
@@ -807,15 +1064,87 @@ stargazer(
   , notes = "Robust SE"
   , star.cutoffs = c(0.05, 0.01, 0.001)
   )
-
-
 ```
 
-```{r}
+```
+## 
+## =================================================================
+##                                  Dependent variable:             
+##                     ---------------------------------------------
+##                                      log(crmrte)                 
+##                              (1)                    (2)          
+## -----------------------------------------------------------------
+## log(prbarr)               -0.615***              -0.567***       
+##                            (0.130)                (0.119)        
+##                                                                  
+## log(prbconv)              -0.427***              -0.402***       
+##                            (0.123)                (0.121)        
+##                                                                  
+## log(wtrd)                   0.007                  0.074         
+##                            (0.420)                (0.417)        
+##                                                                  
+## log(wser)                   -0.512                               
+##                            (0.315)                               
+##                                                                  
+## log(wloc)                   0.640                                
+##                            (0.699)                               
+##                                                                  
+## log(wsta)                   -0.266                               
+##                            (0.313)                               
+##                                                                  
+## log(wfed)                  1.769**                1.559**        
+##                            (0.573)                (0.539)        
+##                                                                  
+## log(taxpc)                  0.404                  0.374         
+##                            (0.207)                (0.202)        
+##                                                                  
+## Constant                  -16.205***             -15.810***      
+##                            (3.414)                (2.360)        
+##                                                                  
+## -----------------------------------------------------------------
+## BIC                         102.7                    93          
+## Observations                  89                     89          
+## R2                          0.614                  0.597         
+## Adjusted R2                 0.575                  0.573         
+## Residual Std. Error    0.353 (df = 80)        0.354 (df = 83)    
+## F Statistic         15.875*** (df = 8; 80) 24.614*** (df = 5; 83)
+## =================================================================
+## Note:                               *p<0.05; **p<0.01; ***p<0.001
+##                                                         Robust SE
+```
+
+
+```r
 # F-test: joint significance of economic policy variables
 print("F-test results for joint significance of economic policies") 
-linearHypothesis(mod2_1, c("log(wser)=0", "log(wsta)=0", "log(wtrd)=0", "log(wloc)=0"), vcov=vcovHC)
+```
 
+```
+## [1] "F-test results for joint significance of economic policies"
+```
+
+```r
+linearHypothesis(mod2_1, c("log(wser)=0", "log(wsta)=0", "log(wtrd)=0", "log(wloc)=0"), vcov=vcovHC)
+```
+
+```
+## Linear hypothesis test
+## 
+## Hypothesis:
+## log(wser) = 0
+## log(wsta) = 0
+## log(wtrd) = 0
+## log(wloc) = 0
+## 
+## Model 1: restricted model
+## Model 2: log(crmrte) ~ log(prbarr) + log(prbconv) + log(wtrd) + log(wser) + 
+##     log(wloc) + log(wsta) + log(wfed) + log(taxpc)
+## 
+## Note: Coefficient covariance matrix supplied.
+## 
+##   Res.Df Df      F Pr(>F)
+## 1     84                 
+## 2     80  4 0.7892 0.5356
 ```
 
 ##### Conclusion
@@ -863,7 +1192,8 @@ Many counties had similar demographics (`density`, `mix`, `pctymle`). This may b
 
 Taking the log of density does not improve its fit to crime rate. 
 
-```{r}
+
+```r
 ggplot(data = data2, aes(x = density, log(crmrte))) +
   geom_point() +
   theme_minimal() +
@@ -872,7 +1202,10 @@ ggplot(data = data2, aes(x = density, log(crmrte))) +
   geom_smooth(method='lm', formula= y~x)
 ```
 
-```{r}
+<img src="lab_3_v3_files/figure-html/unnamed-chunk-44-1.png" width="672" />
+
+
+```r
 ggplot(data = data2, aes(x = log(density), log(crmrte))) +
   geom_point() +
   theme_minimal() +
@@ -881,11 +1214,14 @@ ggplot(data = data2, aes(x = log(density), log(crmrte))) +
   geom_smooth(method='lm', formula= y~x)
 ```
 
+<img src="lab_3_v3_files/figure-html/unnamed-chunk-45-1.png" width="672" />
+
 ##### Percent Young Male in 1980
 
 Percent Young Male does not seem to have a linear relationship with crime rate. Log-transforming Percent Young Male did not solve the issue. 
 
-```{r}
+
+```r
 ggplot(data = data2, aes(x = pctymle, log(crmrte))) +
   geom_point() +
   theme_minimal() +
@@ -894,7 +1230,10 @@ ggplot(data = data2, aes(x = pctymle, log(crmrte))) +
   geom_smooth(method='lm', formula= y~x)
 ```
 
-```{r}
+<img src="lab_3_v3_files/figure-html/unnamed-chunk-46-1.png" width="672" />
+
+
+```r
 ggplot(data = data2, aes(x = log(pctymle), log(crmrte))) +
   geom_point() +
   theme_minimal() +
@@ -903,12 +1242,14 @@ ggplot(data = data2, aes(x = log(pctymle), log(crmrte))) +
   geom_smooth(method='lm', formula= y~x)
 ```
 
+<img src="lab_3_v3_files/figure-html/unnamed-chunk-47-1.png" width="672" />
+
 ##### Percent Minority
 
 The percent minority in 1980 does not have a strong relationship with crime rate. Counties appear to have a wide range of this variable and there is only a slight positive correlation with crime rate. We noticed a slight concave form on the scatterplot so we tried a quadratic transformation. 
 
-```{r}
 
+```r
 ggplot(data = data2, aes(x = pctmin80, log(crmrte))) +
   geom_point() +
   theme_minimal() +
@@ -917,7 +1258,10 @@ ggplot(data = data2, aes(x = pctmin80, log(crmrte))) +
   geom_smooth(method='lm', formula= y~x)
 ```
 
-```{r}
+<img src="lab_3_v3_files/figure-html/unnamed-chunk-48-1.png" width="672" />
+
+
+```r
 ggplot(data = data2, aes(x = pctmin80*pctmin80, log(crmrte))) +
   geom_point() +
   theme_minimal() +
@@ -925,6 +1269,8 @@ ggplot(data = data2, aes(x = pctmin80*pctmin80, log(crmrte))) +
   ylab("Log Crime Rate") + xlab("Minority^2") +
   geom_smooth(method='lm', formula= y ~x + I(x^2))
 ```
+
+<img src="lab_3_v3_files/figure-html/unnamed-chunk-49-1.png" width="672" />
 
 
 #### Discussion
@@ -943,8 +1289,8 @@ Including factors related to the demographics of an area (density; percent young
 Finally, when we added demographics to the model the estimated impact of probability of arrest on crime reduces further versus model #2. The current set of model specifications suggest that, ceteris paribus, a 10% increase in `prbarr` would lead to a ~5% decrease in crime rate, while a 10% increase in `prbconv` would lead to a ~4% decrease in crime rate (vs. an estimated impact of ~6% and ~4% for the first set of models #2 presented in the previous section). Either way, this figures still have important practical meaning, as a 4-5% change in crime rate may have material impact on people's lives.  
 
 
-```{r, warning=F, error=F}
 
+```r
 data2$pctmin802 = data2$pctmin80*data2$pctmin80
 
 # fit models
@@ -974,16 +1320,96 @@ stargazer(
                      )
                    )
   )
+```
 
+```
+## 
+## ========================================================================================
+##                                             Dependent variable:                         
+##                     --------------------------------------------------------------------
+##                                                 log(crmrte)                             
+##                              (1)                    (2)                    (3)          
+## ----------------------------------------------------------------------------------------
+## log(prbarr)               -0.504***              -0.478***              -0.559***       
+##                            (0.110)                (0.126)                (0.089)        
+##                                                                                         
+## log(prbconv)               -0.329**               -0.326**              -0.363***       
+##                            (0.100)                (0.101)                (0.094)        
+##                                                                                         
+## log(wtrd)                   0.075                  0.032                  -0.008        
+##                            (0.373)                (0.376)                (0.341)        
+##                                                                                         
+## log(wfed)                   1.072*                 1.096*                 1.002*        
+##                            (0.427)                (0.431)                (0.444)        
+##                                                                                         
+## log(taxpc)                  0.289                  0.269                  0.230         
+##                            (0.317)                (0.362)                (0.322)        
+##                                                                                         
+## density                     0.079                  0.077                  0.089*        
+##                            (0.043)                (0.043)                (0.045)        
+##                                                                                         
+## pctmin80                   1.127***                1.841                 1.153***       
+##                            (0.214)                (0.978)                (0.210)        
+##                                                                                         
+## pctmin802                                          -1.295                               
+##                                                   (1.551)                               
+##                                                                                         
+## pctymle                     3.087                  3.008                                
+##                            (3.491)                (3.279)                               
+##                                                                                         
+## Constant                  -13.064***             -12.921***             -11.835***      
+##                            (2.256)                (2.283)                (2.650)        
+##                                                                                         
+## ----------------------------------------------------------------------------------------
+## BIC                          62.6                   65.7                   63.1         
+## Observations                  89                     89                     89          
+## R2                          0.754                  0.758                  0.740         
+## Adjusted R2                 0.729                  0.730                  0.717         
+## Residual Std. Error    0.282 (df = 80)        0.282 (df = 79)        0.288 (df = 81)    
+## F Statistic         30.642*** (df = 8; 80) 27.426*** (df = 9; 79) 32.863*** (df = 7; 81)
+## ========================================================================================
+## Note:                                                      *p<0.05; **p<0.01; ***p<0.001
+##                                                                                Robust SE
+```
 
+```r
 mod3 <- mod3_1
 se_mod3 <- se_mod3_1
 ```
 
-```{r}
+
+```r
 # F-test: joint significance of demographic variables
 print("F-test results for joint significance of demographic variables") 
+```
+
+```
+## [1] "F-test results for joint significance of demographic variables"
+```
+
+```r
 linearHypothesis(mod3_1, c("density=0", "pctmin80=0", "pctymle=0"), vcov=vcovHC)
+```
+
+```
+## Linear hypothesis test
+## 
+## Hypothesis:
+## density = 0
+## pctmin80 = 0
+## pctymle = 0
+## 
+## Model 1: restricted model
+## Model 2: log(crmrte) ~ log(prbarr) + log(prbconv) + log(wtrd) + log(wfed) + 
+##     log(taxpc) + density + pctmin80 + pctymle
+## 
+## Note: Coefficient covariance matrix supplied.
+## 
+##   Res.Df Df      F    Pr(>F)    
+## 1     83                        
+## 2     80  3 9.6385 1.673e-05 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
 ##### Outliers
@@ -996,29 +1422,91 @@ There are 5 observations labeled as outliers. These labels correspond to the row
 * 32 - county 69 
 * 50 - county 113
 
-```{r}
+
+```r
 ols_plot_resid_lev(mod3)
 ```
+
+<img src="lab_3_v3_files/figure-html/unnamed-chunk-52-1.png" width="672" />
 
 We already determined that we would retain counties 11 and 55 for modeling, since these represent edge cases rather than erroneous data. However, for the others we may have missed data quality issues. Nothing stands out when we examine the distributions of the variables in the model, except that many have overall lower crime rates as well as low probabilities of arrest. This does not suggest a data quality issue as much as that these are unusual counties in that respect (since generally lower rates of crime were found to be associated with high probabilities of arrest). 
 
 The table below shows the distribution of our model variables for these 3 counties. 
 
-```{r}
+
+```r
 outs <- data2 %>% filter(county %in% c(53, 69, 113)) %>% select(crmrte, prbarr, prbconv, wtrd, wfed, taxpc, density, pctmin80, pctymle)
 skim(outs)
 ```
 
+```
+## Skim summary statistics
+##  n obs: 3 
+##  n variables: 9 
+## 
+## ── Variable type:numeric ──────────────────────────────────────────────────────────────────────────
+##  variable missing complete n    mean      sd      p0     p25     p50
+##    crmrte       0        3 3   0.015  0.0018   0.014   0.014   0.014
+##   density       0        3 3   0.57   0.13     0.45    0.49    0.54 
+##  pctmin80       0        3 3   0.21   0.2      0.024   0.1     0.18 
+##   pctymle       0        3 3   0.086  0.0051   0.082   0.083   0.085
+##    prbarr       0        3 3   0.26   0.066    0.18    0.23    0.28 
+##   prbconv       0        3 3   0.37   0.33     0.14    0.18    0.22 
+##     taxpc       0        3 3  42.19   7.6     35.38   38.09   40.8  
+##      wfed       0        3 3 408.31  94.9    337.09  354.44  371.79 
+##      wtrd       0        3 3 213.59  56.54   154.21  186.99  219.78 
+##      p75    p100     hist
+##    0.016   0.017 ▇▁▁▁▁▁▁▃
+##    0.62    0.71  ▇▁▇▁▁▁▁▇
+##    0.3     0.42  ▇▁▁▇▁▁▁▇
+##    0.088   0.092 ▇▁▇▁▁▁▁▇
+##    0.29    0.3   ▇▁▁▁▁▁▇▇
+##    0.48    0.74  ▇▇▁▁▁▁▁▇
+##   45.59   50.38  ▇▁▇▁▁▁▁▇
+##  443.92  516.05  ▇▇▁▁▁▁▁▇
+##  243.28  266.78  ▇▁▁▁▇▁▁▇
+```
+
 This table is the distribution of these variables in the rest of the data. 
 
-```{r}
+
+```r
 without_outs <- data2 %>% filter(county != 53 & county != 69 & county != 113) %>% select(crmrte, prbarr, prbconv, wtrd, wfed, taxpc, density, pctmin80, pctymle)
 skim(without_outs)
 ```
 
+```
+## Skim summary statistics
+##  n obs: 86 
+##  n variables: 9 
+## 
+## ── Variable type:numeric ──────────────────────────────────────────────────────────────────────────
+##  variable missing complete  n    mean     sd         p0     p25     p50
+##    crmrte       0       86 86   0.034  0.019     0.0055   0.023   0.03 
+##   density       0       86 86   1.48   1.54  2e-05        0.57    1.02 
+##  pctmin80       0       86 86   0.25   0.17      0.013    0.1     0.25 
+##   pctymle       0       86 86   0.084  0.024     0.062    0.074   0.078
+##    prbarr       0       86 86   0.3    0.14      0.093    0.21    0.27 
+##   prbconv       0       86 86   0.54   0.31      0.068    0.35    0.45 
+##     taxpc       0       86 86  37.99  13.34     25.69    30.65   34.77 
+##      wfed       0       86 86 444.53  58.84    326.1    407.42  450.06 
+##      wtrd       0       86 86 211.33  33.21    161.38   191.19  202.99 
+##      p75    p100     hist
+##    0.041   0.099 ▅▇▇▃▂▁▁▁
+##    1.59    8.83  ▇▅▁▁▁▁▁▁
+##    0.38    0.62  ▇▅▅▅▆▅▁▂
+##    0.083   0.25  ▇▁▁▁▁▁▁▁
+##    0.35    1.09  ▆▇▃▂▁▁▁▁
+##    0.57    1.67  ▂▇▅▁▁▁▁▁
+##   40.7   119.76  ▇▃▁▁▁▁▁▁
+##  478.26  597.95  ▃▃▅▇▆▃▂▁
+##  224.28  354.68  ▃▇▅▂▁▁▁▁
+```
+
 Do these three counties influence our model fits? We can see that without these observations, we now explain a bit more of the variation. Although eliminating these have improved our fit, we do not have any reason to suspect that they have data quality issues. Dropping any of these do not change our conclusions around our main predictor variables. Thus, we appear to have minimized the effect of outliers for the most part in our model (probably via log transformations). 
 
-```{r, warning = F, error = F}
+
+```r
 # county 53
 mod3_out53 <- lm(log(crmrte) ~ log(prbarr) + log(prbconv) + log(wtrd)  + log(wfed) + log(taxpc) + density + pctmin80 + pctymle, data = filter(data2, county != 53)) 
 
@@ -1045,6 +1533,53 @@ stargazer(
   , column.labels = c("With", "Omit 53", "Omit 69", "Omit 113") 
   , notes = c("Robust SE")
 )
+```
+
+```
+## 
+## ===============================================================================================================
+##                                                         Dependent variable:                                    
+##                     -------------------------------------------------------------------------------------------
+##                                                             log(crmrte)                                        
+##                              With                 Omit 53                Omit 69                Omit 113       
+##                              (1)                    (2)                    (3)                    (4)          
+## ---------------------------------------------------------------------------------------------------------------
+## log(prbarr)               -0.504***              -0.529***              -0.505***              -0.541***       
+##                            (0.110)                (0.103)                (0.110)                (0.105)        
+##                                                                                                                
+## log(prbconv)               -0.329**              -0.377***               -0.318**              -0.356***       
+##                            (0.100)                (0.102)                (0.099)                (0.107)        
+##                                                                                                                
+## log(wtrd)                   0.075                  0.215                  0.222                  -0.020        
+##                            (0.373)                (0.349)                (0.351)                (0.357)        
+##                                                                                                                
+## log(wfed)                   1.072*                 0.964*                1.121**                 1.013*        
+##                            (0.427)                (0.403)                (0.421)                (0.423)        
+##                                                                                                                
+## log(taxpc)                  0.289                  0.332                  0.302                  0.294         
+##                            (0.317)                (0.286)                (0.319)                (0.301)        
+##                                                                                                                
+## density                     0.079                  0.064                  0.066                  0.078         
+##                            (0.043)                (0.041)                (0.042)                (0.041)        
+##                                                                                                                
+## pctmin80                   1.127***               1.111***               1.174***               1.075***       
+##                            (0.214)                (0.215)                (0.211)                (0.217)        
+##                                                                                                                
+## pctymle                     3.087                  2.995                  3.351                  2.815         
+##                            (3.491)                (3.287)                (3.432)                (3.423)        
+##                                                                                                                
+## Constant                  -13.064***             -13.332***             -14.196***             -12.239***      
+##                            (2.256)                (2.264)                (2.060)                (2.088)        
+##                                                                                                                
+## ---------------------------------------------------------------------------------------------------------------
+## Observations                  89                     88                     88                     88          
+## R2                          0.754                  0.780                  0.770                  0.765         
+## Adjusted R2                 0.729                  0.758                  0.747                  0.741         
+## Residual Std. Error    0.282 (df = 80)        0.265 (df = 79)        0.273 (df = 79)        0.275 (df = 79)    
+## F Statistic         30.642*** (df = 8; 80) 35.044*** (df = 8; 79) 33.081*** (df = 8; 79) 32.094*** (df = 8; 79)
+## ===============================================================================================================
+## Note:                                                                             *p<0.05; **p<0.01; ***p<0.001
+##                                                                                                       Robust SE
 ```
 
 ##### Conclusion
@@ -1098,7 +1633,8 @@ Although `west` is our main variable of interest and we expect it to drive most 
 
 Different geographies show the same pattern when it comes to urban versus rural: rural counties have a lower crime rate compared to urban ones (as expected). However, `urban` and `density` are highly correlated as seen early, so adding `urban` to the model may not improve fits. We can also see that central and eastern counties are more similar in terms of crime rate versus western counties (western counties have lower crime overall, especially in their urban regions). Thus, we don't expect the covariate for `central` to be significant. 
 
-```{r}
+
+```r
 # plot barplots
 ggplot(geo_long, aes(x = location, y = crmrte, fill = type)) +
   geom_bar(position="dodge", stat="summary", fun.y = "mean") +
@@ -1107,9 +1643,12 @@ ggplot(geo_long, aes(x = location, y = crmrte, fill = type)) +
   xlab("")
 ```
 
+<img src="lab_3_v3_files/figure-html/unnamed-chunk-56-1.png" width="672" />
+
 *Statistics Interpretation*
 
-```{r, warning=F, error=F}
+
+```r
 mod4_1 <- lm(log(crmrte) ~ log(prbarr) + log(prbconv) + log(wtrd)  + log(wfed) + log(taxpc) + density + pctmin80 + pctymle + west + central + urban, data = data2)
 mod4_2 <- lm(log(crmrte) ~ log(prbarr)*west + log(prbconv)*west + log(prbarr)*central + log(prbconv)*central + log(wtrd) + log(wfed) + log(taxpc) + density + pctmin80 + pctymle, data = data2)   # west and central interaction
 mod4_3 <- lm(log(crmrte) ~ log(prbarr)*urban + log(prbconv)*urban + log(`wtrd`) + log(wfed) + log(taxpc) + density + pctmin80 + pctymle, data = data2)  # urban interactions
@@ -1137,10 +1676,85 @@ stargazer(
   , add.lines=list(c("BIC", round(BIC(mod4_1),1), round(BIC(mod4_2),1) , round(BIC(mod4_3),1) , round(BIC(mod4_4),1) , round(BIC(mod4_5),1)
                      )
 ))
+```
 
+```
+## 
+## ===========================================================================================================================================
+##                                                                       Dependent variable:                                                  
+##                      ----------------------------------------------------------------------------------------------------------------------
+##                                                                           log(crmrte)                                                      
+##                                (1)                     (2)                     (3)                    (4)                     (5)          
+## -------------------------------------------------------------------------------------------------------------------------------------------
+## log(prbarr)                 -0.473***               -0.661***               -0.510***              -0.482***               -0.508***       
+##                              (0.109)                 (0.127)                 (0.103)                (0.111)                 (0.147)        
+##                                                                                                                                            
+## log(prbconv)                -0.333**                 -0.354*                -0.321**                -0.327**               -0.408**        
+##                              (0.104)                 (0.180)                 (0.099)                (0.100)                 (0.149)        
+##                                                                                                                                            
+## log(wtrd)                     0.020                  -0.043                   0.038                  0.009                   0.008         
+##                              (0.368)                 (0.381)                 (0.368)                (0.366)                 (0.362)        
+##                                                                                                                                            
+## log(wfed)                    1.083**                 1.165**                 1.013*                  1.071*                 1.067*         
+##                              (0.407)                 (0.405)                 (0.450)                (0.421)                 (0.421)        
+##                                                                                                                                            
+## log(taxpc)                    0.260                   0.183                   0.333                  0.260                   0.260         
+##                              (0.291)                 (0.334)                 (0.328)                (0.302)                 (0.298)        
+##                                                                                                                                            
+## density                      0.136*                   0.084                  0.135*                  0.081*                  0.077         
+##                              (0.060)                 (0.045)                 (0.066)                (0.041)                 (0.046)        
+##                                                                                                                                            
+## pctmin80                     0.837*                   0.862                 1.194***                0.931**                0.951***        
+##                              (0.398)                 (0.442)                 (0.220)                (0.306)                 (0.289)        
+##                                                                                                                                            
+## pctymle                       2.667                   2.738                   3.214                  2.988                   2.790         
+##                              (2.956)                 (3.152)                 (3.222)                (3.263)                 (3.230)        
+##                                                                                                                                            
+## log(prbarr):west                                      0.167                                                                  0.006         
+##                                                      (0.219)                                                                (0.217)        
+##                                                                                                                                            
+## west:log(prbconv)                                     0.117                                                                  0.177         
+##                                                      (0.238)                                                                (0.217)        
+##                                                                                                                                            
+## log(prbarr):central                                   0.317                                                                                
+##                                                      (0.234)                                                                               
+##                                                                                                                                            
+## log(prbconv):central                                 -0.182                                                                                
+##                                                      (0.214)                                                                               
+##                                                                                                                                            
+## west                         -0.175                   0.129                                          -0.113                  0.035         
+##                              (0.157)                 (0.359)                                        (0.107)                 (0.342)        
+##                                                                                                                                            
+## central                      -0.112                   0.196                                                                                
+##                              (0.106)                 (0.443)                                                                               
+##                                                                                                                                            
+## log(prbarr):urban                                                             0.418                                                        
+##                                                                              (1.055)                                                       
+##                                                                                                                                            
+## urban:log(prbconv)                                                           -0.105                                                        
+##                                                                              (0.987)                                                       
+##                                                                                                                                            
+## urban                        -0.290                                           0.231                                                        
+##                              (0.232)                                         (2.432)                                                       
+##                                                                                                                                            
+## Constant                   -12.554***              -12.677***              -12.748***              -12.486***             -12.539***       
+##                              (2.261)                 (2.320)                 (2.515)                (2.335)                 (2.350)        
+##                                                                                                                                            
+## -------------------------------------------------------------------------------------------------------------------------------------------
+## BIC                           70.6                    77.9                    71.7                    65.6                   71.9          
+## Observations                   89                      89                      89                      89                     89           
+## R2                            0.769                   0.784                   0.765                  0.758                   0.765         
+## Adjusted R2                   0.735                   0.743                   0.732                  0.730                   0.732         
+## Residual Std. Error      0.279 (df = 77)         0.275 (df = 74)         0.280 (df = 77)        0.281 (df = 79)         0.281 (df = 77)    
+## F Statistic          23.239*** (df = 11; 77) 19.185*** (df = 14; 74) 22.848*** (df = 11; 77) 27.487*** (df = 9; 79) 22.803*** (df = 11; 77)
+## ===========================================================================================================================================
+## Note:                                                                                                         *p<0.05; **p<0.01; ***p<0.001
+##                                                                                                                                   Robust SE
+```
+
+```r
 mod4 <- mod4_4
 se_mod4 <- se_mod4_4
-
 ```
 
 We can see that the addition of geographic variables did not reduce BIC nor improve our model fit. Further, we can conclude from the F-test that geographical variables are not jointly significant. 
@@ -1149,14 +1763,41 @@ Across equations of this model set, our preferred one is equation 4, which featu
 
 When we added geographic variables to the model, the point estimates of the impact of probability of arrest and probability of conviction on crime remains virtually unchanged versus model #3. In the current set of model specifications with geographic variables, our preferred equation (number 4) suggests that, ceteris paribus, a 10% increase in `prbarr` would lead to a ~5% decrease in crime rate, while a 10% increase in `prbconv` would lead to a ~4% decrease in crime rate - these figures are the same of model set #3 and in fact not much different from model sets #1 (only criminal justice system variables) and #2 (criminal justice system + economic variables). Again, it's fair to argue that this figures have important practical meaning, as a 4-5% change in crime rate may have material impact on people's lives.  
 
-```{r}
+
+```r
 # F-test: joint significance of geographic characteristics
 print("F-test results for joint significance of geographic characteristics") 
+```
+
+```
+## [1] "F-test results for joint significance of geographic characteristics"
+```
+
+```r
 linearHypothesis(mod4_1, c("west=0", "central=0", "urban=0"), vcov=vcovHC)
 ```
 
-```{r, warning=F, error=F}
 ```
+## Linear hypothesis test
+## 
+## Hypothesis:
+## west = 0
+## central = 0
+## urban = 0
+## 
+## Model 1: restricted model
+## Model 2: log(crmrte) ~ log(prbarr) + log(prbconv) + log(wtrd) + log(wfed) + 
+##     log(taxpc) + density + pctmin80 + pctymle + west + central + 
+##     urban
+## 
+## Note: Coefficient covariance matrix supplied.
+## 
+##   Res.Df Df      F Pr(>F)
+## 1     80                 
+## 2     77  3 0.8147 0.4896
+```
+
+
 
 
 *Conclusion*
@@ -1175,7 +1816,8 @@ We could not find a significant impact of economic policies (proxied by wages in
 
 Across demographic determinants, the percentage of minorities seems to be the most relevant, with a positive impact on crime. Geographic determinants explain little of the cross-county variation of crime rate, probably because North Carolina is a small state.     
 
-```{r, warning=F, error=F}
+
+```r
 stargazer(
     mod1
   , mod2
@@ -1187,9 +1829,56 @@ stargazer(
   , notes = c("Robust SE")
   , add.lines=list(c("BIC", round(BIC(mod1),1), round(BIC(mod2),1) , round(BIC(mod3),1) , round(BIC(mod4),1)
                      )))
-  
-  
+```
 
+```
+## 
+## ===============================================================================================================
+##                                                         Dependent variable:                                    
+##                     -------------------------------------------------------------------------------------------
+##                                                             log(crmrte)                                        
+##                              (1)                    (2)                    (3)                    (4)          
+## ---------------------------------------------------------------------------------------------------------------
+## log(prbarr)               -0.730***              -0.567***              -0.504***              -0.482***       
+##                            (0.111)                (0.111)                (0.111)                (0.111)        
+##                                                                                                                
+## log(prbconv)              -0.442***              -0.402***               -0.329**               -0.327**       
+##                            (0.100)                (0.100)                (0.100)                (0.100)        
+##                                                                                                                
+## log(wtrd)                                          0.074                  0.075                  0.009         
+##                                                   (0.366)                (0.366)                (0.366)        
+##                                                                                                                
+## log(wfed)                                         1.559***                1.072*                 1.071*        
+##                                                   (0.421)                (0.421)                (0.421)        
+##                                                                                                                
+## log(taxpc)                                         0.374                  0.289                  0.260         
+##                                                   (0.302)                (0.302)                (0.302)        
+##                                                                                                                
+## density                                                                   0.079                  0.081*        
+##                                                                          (0.041)                (0.041)        
+##                                                                                                                
+## pctmin80                                                                 1.127***               0.931**        
+##                                                                          (0.306)                (0.306)        
+##                                                                                                                
+## pctymle                                                                   3.087                  2.988         
+##                                                                          (3.263)                (3.263)        
+##                                                                                                                
+## west                                                                                             -0.113        
+##                                                                                                 (0.107)        
+##                                                                                                                
+## Constant                   -4.822*               -15.810***             -13.064***             -12.486***      
+##                            (2.335)                (2.335)                (2.335)                (2.335)        
+##                                                                                                                
+## ---------------------------------------------------------------------------------------------------------------
+## BIC                         114.9                   92.9                   62.6                   65.6         
+## Observations                  89                     89                     89                     89          
+## R2                          0.400                  0.597                  0.754                  0.758         
+## Adjusted R2                 0.386                  0.573                  0.729                  0.730         
+## Residual Std. Error    0.424 (df = 86)        0.354 (df = 83)        0.282 (df = 80)        0.281 (df = 79)    
+## F Statistic         28.671*** (df = 2; 86) 24.614*** (df = 5; 83) 30.642*** (df = 8; 80) 27.487*** (df = 9; 79)
+## ===============================================================================================================
+## Note:                                                                             *p<0.05; **p<0.01; ***p<0.001
+##                                                                                                       Robust SE
 ```
 
 ## Checking the 6 Classical Linear Model assumptions for our preferred model (Model #3) 
@@ -1210,9 +1899,12 @@ There is no need to explicitly check for perfect collinearity, because R will al
 
 Let's take a look at the diagnostic plots:
 
-```{r, warning=F, error=F}
+
+```r
 plot(mod3, which = 1)
 ```
+
+<img src="lab_3_v3_files/figure-html/unnamed-chunk-61-1.png" width="672" />
 
 Notice that there is only a slight deviation from zero conditional mean, indicated by a not perfectly flat curve. This means that our coefficients maybe be biased. Next section, we discuss some omitted variables candidates and the bias direction they would imply.  
 
@@ -1220,9 +1912,12 @@ Notice that there is only a slight deviation from zero conditional mean, indicat
 
 Our residuals versus fitted values plot seems to indicate heteroskedasticity based on the scale location plot. We see a bump for values close to the mean and high end of the distribution. 
 
-```{r, warning=F, error=F}
+
+```r
 plot(mod3, which = 3)
 ```
+
+<img src="lab_3_v3_files/figure-html/unnamed-chunk-62-1.png" width="672" />
 
 We used robust standard error to test all of our models, which is a common strategy in correcting for heteroskedasticity - we believe this satisfies this assumption.
 
@@ -1230,15 +1925,21 @@ We used robust standard error to test all of our models, which is a common strat
 
 To check normality of errors, we can look at the qqplot that's part of R's standard diagnostics.
 
-```{r, warning=F, error=F}
+
+```r
 plot(mod3, which = 2)
 ```
 
+<img src="lab_3_v3_files/figure-html/unnamed-chunk-63-1.png" width="672" />
+
 We can also visually look at the residuals directly.
 
-```{r, warning=F, error=F}
+
+```r
 hist(mod3$residuals, breaks = 20, main = "Residuals from Linear Model Predicting log(Crime Rate)")
 ```
+
+<img src="lab_3_v3_files/figure-html/unnamed-chunk-64-1.png" width="672" />
 
 Both methods suggest we have a leftward skew. However, we have a large sample size, so the CLT tells us that our estimators will have a normal sampling distribution. The histogram confirms that we aren't in a situation with an extreme skew, so n=90 should be sufficient for the CLT.
 

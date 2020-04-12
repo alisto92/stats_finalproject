@@ -24,7 +24,7 @@ render_and_count <- function(rmdFile) {
   cat("\n\nword count: ", n_words, "\n\n")
 }
 
-
-text_stats_file("~/project_3/w203_project3/lab_3-master/project_3_draft.Rmd")
-
-wordcountaddin::word_count("~/project_3/w203_project3/lab_3-master/project_3_draft.Rmd")
+# change name of file to run 
+#text_stats_file("~/project_3/w203_project3/lab_3-master/lab_3_v3.Rmd")
+# run this one: 
+wordcountaddin::word_count("~/project_3/w203_project3/lab_3-master/lab_3_v3.Rmd")
