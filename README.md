@@ -4,7 +4,7 @@
 
 # Purpose
 
-This repo was created to complete our final lab assignment for the W203 course (Statistics for Data Science) of the UC Berkeley MIDS program. 
+This repo was created to complete our final lab assignment for the W203 course (Statistics for Data Science) of the UC Berkeley MIDS program. For this project, we explored the impact of economic and crime policy on crime in a limited dataset from 1987 in North Carolina. 
 
 The archive folder contains older versions of the lab. 
 
